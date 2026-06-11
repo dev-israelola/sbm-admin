@@ -1,0 +1,126 @@
+import {
+  BarChart3,
+  Boxes,
+  Calculator,
+  ClipboardCheck,
+  ClipboardList,
+  CreditCard,
+  FileText,
+  Gift,
+  LayoutDashboard,
+  MessageSquare,
+  Package,
+  Receipt,
+  RotateCcw,
+  Settings,
+  ShoppingBag,
+  Sparkles,
+  Truck,
+  Users,
+  Warehouse,
+  type LucideIcon,
+} from "lucide-react";
+import type { Role } from "@/types/role";
+
+export interface NavSection {
+  title: string;
+  items: { to: string; label: string; icon: LucideIcon; badgeKey?: string }[];
+}
+
+export const NAV_BY_ROLE: Record<Role, NavSection[]> = {
+  admin: [
+    {
+      title: "Overview",
+      items: [
+        { to: "/admin", label: "Dashboard", icon: LayoutDashboard },
+      ],
+    },
+    {
+      title: "Operations",
+      items: [
+        { to: "/admin/orders", label: "Orders", icon: ShoppingBag, badgeKey: "pendingOrders" },
+        { to: "/admin/delivery", label: "Delivery", icon: Truck, badgeKey: "pendingPickup" },
+        { to: "/admin/refunds", label: "Refunds", icon: RotateCcw, badgeKey: "pendingRefunds" },
+        { to: "/admin/consultations", label: "Consultations", icon: MessageSquare },
+      ],
+    },
+    {
+      title: "Catalog",
+      items: [
+        { to: "/admin/products", label: "Products", icon: Package },
+        { to: "/admin/inventory", label: "Inventory", icon: Warehouse, badgeKey: "lowStock" },
+        { to: "/admin/customers", label: "Customers", icon: Users },
+      ],
+    },
+    {
+      title: "Finance",
+      items: [
+        { to: "/admin/accounting", label: "Accounting", icon: Calculator },
+        { to: "/admin/accounting/sales", label: "Sales", icon: Receipt },
+        { to: "/admin/accounting/expenses", label: "Expenses", icon: CreditCard },
+        { to: "/admin/accounting/reconciliation", label: "Reconciliation", icon: ClipboardCheck },
+        { to: "/admin/accounting/profit-loss", label: "Profit & loss", icon: BarChart3 },
+        { to: "/admin/rewards", label: "Rewards", icon: Gift },
+      ],
+    },
+    {
+      title: "System",
+      items: [
+        { to: "/admin/reports", label: "Reports", icon: FileText },
+        { to: "/admin/settings", label: "Settings", icon: Settings },
+      ],
+    },
+  ],
+  manager: [
+    {
+      title: "Overview",
+      items: [{ to: "/manager", label: "Dashboard", icon: LayoutDashboard }],
+    },
+    {
+      title: "Operations",
+      items: [
+        { to: "/manager/orders", label: "Orders", icon: ShoppingBag, badgeKey: "pendingOrders" },
+        { to: "/manager/inventory", label: "Inventory", icon: Warehouse, badgeKey: "lowStock" },
+        { to: "/manager/delivery", label: "Delivery", icon: Truck, badgeKey: "pendingPickup" },
+        { to: "/manager/refunds", label: "Refunds", icon: RotateCcw, badgeKey: "pendingRefunds" },
+        { to: "/manager/reports", label: "Reports", icon: FileText },
+      ],
+    },
+  ],
+  accountant: [
+    {
+      title: "Overview",
+      items: [{ to: "/accountant", label: "Dashboard", icon: LayoutDashboard }],
+    },
+    {
+      title: "Books",
+      items: [
+        { to: "/accountant/sales", label: "Sales", icon: Receipt },
+        { to: "/accountant/expenses", label: "Expenses", icon: CreditCard },
+        { to: "/accountant/refunds", label: "Refunds", icon: RotateCcw },
+        { to: "/accountant/reconciliation", label: "Reconciliation", icon: ClipboardCheck },
+        { to: "/accountant/profit-loss", label: "Profit & loss", icon: BarChart3 },
+        { to: "/accountant/reports", label: "Reports", icon: FileText },
+      ],
+    },
+  ],
+  delivery: [
+    {
+      title: "My deliveries",
+      items: [
+        { to: "/delivery", label: "Today", icon: LayoutDashboard },
+        { to: "/delivery/assignments", label: "Assignments", icon: ClipboardList },
+      ],
+    },
+  ],
+  consultant: [
+    {
+      title: "Consultations",
+      items: [
+        { to: "/consultant", label: "Today", icon: LayoutDashboard },
+        { to: "/consultant/consultations", label: "All consultations", icon: MessageSquare },
+        { to: "/consultant/products", label: "Products", icon: Sparkles },
+      ],
+    },
+  ],
+};

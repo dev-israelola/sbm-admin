@@ -1,0 +1,58 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --bg: 42 22% 96%;            /* #F8F7F3 */
+    --ink: 0 0% 9%;
+    --ink-muted: 32 7% 41%;
+    --accent: 161 33% 27%;
+    --accent-ink: 40 30% 97%;
+    --accent-soft: 142 22% 92%;  /* #E7EFEA */
+    --surface: 0 0% 100%;
+    --surface-muted: 38 25% 93%; /* #F1EEE8 */
+    --line: 36 27% 84%;
+    --success: 137 47% 34%;
+    --warn: 33 79% 44%;
+    --danger: 4 78% 43%;
+    --info: 222 89% 53%;         /* #2563EB */
+  }
+
+  * { @apply border-line; }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply bg-bg text-ink font-sans antialiased;
+    font-feature-settings: "ss01", "cv11", "tnum";
+  }
+
+  h1, h2, h3, h4, h5, h6 { @apply font-display tracking-tight text-ink; }
+
+  :focus-visible {
+    @apply outline-none ring-2 ring-accent/40 ring-offset-2 ring-offset-bg rounded-md;
+  }
+
+  /* tabular numbers for tables / metric cards */
+  .tabular-nums { font-variant-numeric: tabular-nums; }
+}
+
+@layer components {
+  .eyebrow {
+    @apply text-[11px] font-medium uppercase tracking-[0.16em] text-ink-muted;
+  }
+  .card {
+    @apply rounded-2xl bg-surface border border-line/70;
+  }
+  .panel {
+    @apply rounded-xl bg-surface border border-line/70;
+  }
+  .hairline { @apply border-line; }
+  .data-cell { @apply text-[13px] text-ink leading-tight; }
+  .data-muted { @apply text-[12px] text-ink-muted; }
+}

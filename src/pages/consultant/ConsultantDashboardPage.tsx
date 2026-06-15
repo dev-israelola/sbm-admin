@@ -13,8 +13,9 @@ import { formatDate } from "@/lib/format";
 export default function ConsultantDashboardPage() {
   const user = useAuthStore((s) => s.user);
   const { data } = useConsultations();
+  const consultations = data?.items ?? [];
 
-  const mine = useMemo(() => (data ?? []).filter((c) => c.consultantId === user?.id), [data, user]);
+  const mine = useMemo(() => consultations.filter((c) => c.consultantId === user?.id), [consultations, user]);
   const open = mine.filter((c) => c.status === "scheduled" || c.status === "pending");
   const sent = mine.filter((c) => c.status === "recommendation-sent" || c.status === "completed");
 

@@ -9,7 +9,8 @@ import { Button } from "@/components/ui/button";
 import { FormSelect } from "@/components/forms/FormSelect";
 import { FormInput } from "@/components/forms/FormInput";
 import { useAssignDelivery } from "@/features/delivery/useDeliveries";
-import { STAFF_BY_ROLE } from "@/data/mock-users";
+import { useStaff } from "@/features/auth/useAuth";
+import { nairaToKobo } from "@/lib/format";
 
 const schema = z.object({
   type: z.enum(["internal", "third-party"]),
@@ -29,6 +30,8 @@ interface Props {
 
 export function DeliveryAssignDialog({ open, onOpenChange, deliveryId, orderNumber }: Props) {
   const assign = useAssignDelivery();
+  const staff = useStaff(open);
+  const riders = (staff.data?.items ?? []).filter((u) => u.role === "delivery" && u.active);
   const form = useForm<Values>({
     resolver: zodResolver(schema),
     defaultValues: { type: "internal", deliveryFee: 2500 },
@@ -36,7 +39,11 @@ export function DeliveryAssignDialog({ open, onOpenChange, deliveryId, orderNumb
   const type = form.watch("type");
 
   async function submit(v: Values) {
-    const assignee = STAFF_BY_ROLE.delivery.find((u) => u.id === v.assigneeId);
+    const assignee = riders.find((u) => u.id === v.assigneeId);
+    if (v.type === "internal" && !assignee) {
+      toast.error("Please select an active delivery staff member.");
+      return;
+    }
     await assign.mutateAsync({
       id: deliveryId,
       type: v.type,
@@ -44,7 +51,7 @@ export function DeliveryAssignDialog({ open, onOpenChange, deliveryId, orderNumb
       assigneeName: v.type === "internal" ? assignee?.fullName : undefined,
       provider: v.type === "third-party" ? v.provider : "Internal Rider",
       trackingNumber: v.type === "third-party" ? v.trackingNumber : undefined,
-      deliveryFee: v.deliveryFee,
+      deliveryFee: nairaToKobo(v.deliveryFee),
     });
     toast.success(`Delivery for ${orderNumber} assigned.`);
     onOpenChange(false);
@@ -83,7 +90,8 @@ export function DeliveryAssignDialog({ open, onOpenChange, deliveryId, orderNumb
                   label="Rider"
                   value={field.value ?? ""}
                   onChange={field.onChange}
-                  options={STAFF_BY_ROLE.delivery.map((u) => ({ value: u.id, label: u.fullName }))}
+                  options={riders.map((u) => ({ value: u.id, label: u.fullName }))}
+                  placeholder={staff.isLoading ? "Loading riders..." : "Select rider"}
                 />
               )}
             />

@@ -8,10 +8,9 @@ import { Logo } from "@/components/layout/Logo";
 import { FormInput } from "@/components/forms/FormInput";
 import { Button } from "@/components/ui/button";
 import { useLogin } from "@/features/auth/useAuth";
-import { DEMO_CREDENTIALS } from "@/data/mock-users";
-import { ROLE_HOME, ROLE_LABEL } from "@/types/role";
-import { PLATFORM_CONFIG } from "@/types/platform";
-import { Sparkles, Shield } from "lucide-react";
+import { ROLE_HOME } from "@/types/role";
+import { ALL_PLATFORMS, PLATFORM_CONFIG, type Platform } from "@/types/platform";
+import { Sparkles } from "lucide-react";
 
 const schema = z.object({
   email: z.string().email("Use a valid email"),
@@ -19,12 +18,17 @@ const schema = z.object({
 });
 type Values = z.infer<typeof schema>;
 
+function parsePlatform(value: string | null): Platform | undefined {
+  return ALL_PLATFORMS.includes(value as Platform) ? (value as Platform) : undefined;
+}
+
 export default function LoginPage() {
-  const naturale = PLATFORM_CONFIG.harbs;
+  const naturale = PLATFORM_CONFIG.naturale;
   const holistic = PLATFORM_CONFIG.holistic;
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const next = params.get("next");
+  const preferredPlatform = parsePlatform(params.get("platform"));
   const login = useLogin();
   const form = useForm<Values>({ resolver: zodResolver(schema), defaultValues: { email: "", password: "" } });
   const [busy, setBusy] = useState(false);
@@ -32,19 +36,17 @@ export default function LoginPage() {
   async function submit(values: Values) {
     setBusy(true);
     try {
-      const res = await login.mutateAsync(values);
-      toast.success(`Welcome, ${res.user.fullName.split(" ")[0]}`);
-      navigate(next ?? ROLE_HOME[res.user.role as keyof typeof ROLE_HOME], { replace: true });
+      const res = await login.mutateAsync({ ...values, preferredPlatform });
+      const platformLabel = PLATFORM_CONFIG[res.activePlatform].shortLabel;
+      toast.success(`Welcome, ${res.user.fullName.split(" ")[0]}`, {
+        description: `Signed in to ${platformLabel}.`,
+      });
+      navigate(next ?? ROLE_HOME[res.user.role], { replace: true });
     } catch (e) {
       toast.error("Couldn't sign in", { description: (e as Error).message });
     } finally {
       setBusy(false);
     }
-  }
-
-  function pickDemo(role: typeof DEMO_CREDENTIALS[number]) {
-    form.setValue("email", role.email);
-    form.setValue("password", role.password);
   }
 
   return (
@@ -62,7 +64,7 @@ export default function LoginPage() {
           </p>
         </div>
         <div className="relative z-10 text-[11px] uppercase tracking-[0.18em] text-bg/55">
-          Internal use only · v0.1
+          Internal use only - v0.1
         </div>
         <div
           aria-hidden
@@ -76,8 +78,14 @@ export default function LoginPage() {
           <p className="text-[11px] uppercase tracking-[0.18em] text-ink-muted">Sign in</p>
           <h2 className="font-display text-2xl mt-1.5 text-ink">Welcome to the shared admin</h2>
           <p className="text-[13px] text-ink-muted mt-1">
-            Use any demo credential below. Password is <code className="font-mono text-ink bg-surface-muted rounded px-1 py-0.5 text-[11px]">naturale</code>.
+            Use your admin credentials. We will check Naturale and Holistic automatically.
           </p>
+          {preferredPlatform ? (
+            <p className="mt-3 rounded-md border border-line bg-surface-muted px-3 py-2 text-[12px] text-ink-muted">
+              Sign in to access {PLATFORM_CONFIG[preferredPlatform].shortLabel}. If these credentials belong to a
+              different store, we will send you there instead.
+            </p>
+          ) : null}
 
           <form className="mt-7 space-y-3" onSubmit={form.handleSubmit(submit)}>
             <FormInput
@@ -95,29 +103,9 @@ export default function LoginPage() {
               autoComplete="current-password"
             />
             <Button type="submit" className="w-full" size="lg" disabled={busy}>
-              {busy ? "Signing in…" : "Sign in"}
+              {busy ? "Signing in..." : "Sign in"}
             </Button>
           </form>
-
-          <div className="mt-7">
-            <p className="text-[11px] uppercase tracking-[0.18em] text-ink-muted mb-2 flex items-center gap-1.5">
-              <Shield className="h-3 w-3 text-accent" />
-              Demo roles
-            </p>
-            <div className="grid grid-cols-1 gap-1.5">
-              {DEMO_CREDENTIALS.map((c) => (
-                <button
-                  key={c.role}
-                  type="button"
-                  onClick={() => pickDemo(c)}
-                  className="text-left rounded-md border border-line bg-surface px-3 py-2.5 hover:border-ink/30 transition-colors"
-                >
-                  <p className="text-[13px] font-medium text-ink">{ROLE_LABEL[c.role]}</p>
-                  <p className="text-[11px] text-ink-muted">{c.email}</p>
-                </button>
-              ))}
-            </div>
-          </div>
         </div>
       </section>
     </div>

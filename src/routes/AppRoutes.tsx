@@ -6,6 +6,7 @@ import { RoleGuard } from "./RoleGuard";
 
 // public
 const LoginPage = lazy(() => import("@/pages/LoginPage"));
+const CompleteRegistrationPage = lazy(() => import("@/pages/CompleteRegistrationPage"));
 const ForbiddenPage = lazy(() => import("@/pages/ForbiddenPage"));
 const NotFoundPage = lazy(() => import("@/pages/NotFoundPage"));
 const RoleHomeRedirect = lazy(() => import("@/pages/RoleHomeRedirect"));
@@ -36,6 +37,7 @@ const AdminAccountingReconciliationPage = lazy(() => adminMod().then((m) => ({ d
 const AdminAccountingProfitLossPage = lazy(() => adminMod().then((m) => ({ default: m.AdminAccountingProfitLossPage })));
 const AdminReportsPage = lazy(() => adminMod().then((m) => ({ default: m.AdminReportsPage })));
 const AdminSettingsPage = lazy(() => adminMod().then((m) => ({ default: m.AdminSettingsPage })));
+const AdminTeamPage = lazy(() => adminMod().then((m) => ({ default: m.AdminTeamPage })));
 
 // manager
 const mgrMod = () => import("@/pages/manager");
@@ -49,6 +51,7 @@ const ManagerDeliveryDetailPage = lazy(() => mgrMod().then((m) => ({ default: m.
 const ManagerRefundsPage = lazy(() => mgrMod().then((m) => ({ default: m.ManagerRefundsPage })));
 const ManagerRefundDetailPage = lazy(() => mgrMod().then((m) => ({ default: m.ManagerRefundDetailPage })));
 const ManagerReportsPage = lazy(() => mgrMod().then((m) => ({ default: m.ManagerReportsPage })));
+const ManagerTeamPage = lazy(() => mgrMod().then((m) => ({ default: m.ManagerTeamPage })));
 
 // accountant
 const accMod = () => import("@/pages/accountant");
@@ -77,6 +80,7 @@ export function AppRoutes() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/complete-registration" element={<CompleteRegistrationPage />} />
       <Route path="/403" element={<ForbiddenPage />} />
       <Route path="/" element={<RoleHomeRedirect />} />
 
@@ -109,6 +113,7 @@ export function AppRoutes() {
             <Route path="accounting/reconciliation" element={<AdminAccountingReconciliationPage />} />
             <Route path="accounting/profit-loss" element={<AdminAccountingProfitLossPage />} />
             <Route path="reports" element={<AdminReportsPage />} />
+            <Route path="team" element={<AdminTeamPage />} />
             <Route path="settings" element={<AdminSettingsPage />} />
           </Route>
         </Route>
@@ -127,6 +132,7 @@ export function AppRoutes() {
             <Route path="refunds" element={<ManagerRefundsPage />} />
             <Route path="refunds/:id" element={<ManagerRefundDetailPage />} />
             <Route path="reports" element={<ManagerReportsPage />} />
+            <Route path="team" element={<ManagerTeamPage />} />
           </Route>
         </Route>
 

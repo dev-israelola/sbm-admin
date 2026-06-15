@@ -65,7 +65,7 @@ export function useUpdatePickupStation() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, ...body }: PickupStation) => {
-      const { data } = await api.put<PickupStation>(`/pickup-stations/${id}`, body);
+      const { data } = await api.patch<PickupStation>(`/pickup-stations/${id}`, body);
       return data;
     },
     onSuccess: () => {

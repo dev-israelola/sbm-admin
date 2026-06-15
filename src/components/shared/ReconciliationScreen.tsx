@@ -8,28 +8,33 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { MoneyDisplay } from "@/components/ui/money";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { ReportExportControls } from "@/components/reports/ReportExportControls";
 import { useReconciliation, useReconcile } from "@/features/accounting/useAccounting";
+import { PaginationFooter } from "@/components/ui/pagination-footer";
+import { DEFAULT_PAGE_SIZE } from "@/lib/pagination";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { useAuthStore } from "@/store/auth-store";
-import { formatDateTime } from "@/lib/format";
+import { formatDateTime, formatNaira } from "@/lib/format";
 import type { ReconciliationRecord } from "@/types/accounting";
 
 export function ReconciliationScreen() {
-  const { data, isLoading } = useReconciliation();
   const reconcile = useReconcile();
-  const user = useAuthStore((s) => s.user);
   const [q, setQ] = useState("");
   const [status, setStatus] = useState("all");
+  const [page, setPage] = useState(1);
+  const { data, isLoading } = useReconciliation({
+    status: status === "all" ? undefined : status,
+    page,
+    limit: DEFAULT_PAGE_SIZE,
+  });
   const [pending, setPending] = useState<{ r: ReconciliationRecord; mode: "reconciled" | "discrepancy" } | null>(null);
 
   const filtered = useMemo(() => {
-    if (!data) return undefined;
+    if (!data?.items) return undefined;
     const s = q.toLowerCase();
-    return data.filter((r) => {
+    return data.items.filter((r) => {
       if (s && !`${r.orderNumber} ${r.customerName}`.toLowerCase().includes(s)) return false;
-      if (status !== "all" && r.status !== status) return false;
       return true;
     });
   }, [data, q, status]);
@@ -65,9 +70,10 @@ export function ReconciliationScreen() {
         eyebrow="Accounting"
         title="Cash collection reconciliation"
         description="Verify collected POD payments against expected order totals. Discrepancies flag for follow-up."
+        actions={<ReportExportControls reportId="cash-collection" title="Cash collection" />}
       />
-      <FilterBar searchValue={q} onSearchChange={setQ} searchPlaceholder="Search order or customer…" className="mb-4">
-        <Select value={status} onValueChange={setStatus}>
+      <FilterBar searchValue={q} onSearchChange={(value) => { setQ(value); setPage(1); }} searchPlaceholder="Search order or customer…" className="mb-4">
+        <Select value={status} onValueChange={(value) => { setStatus(value); setPage(1); }}>
           <SelectTrigger className="w-44 h-9 text-[12px]"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All statuses</SelectItem>
@@ -91,6 +97,7 @@ export function ReconciliationScreen() {
           </div>
         }
       />
+      <PaginationFooter meta={data?.meta} page={page} loading={isLoading} itemLabel="reconciliation records" onPageChange={setPage} />
 
       <ConfirmDialog
         open={!!pending}
@@ -99,8 +106,8 @@ export function ReconciliationScreen() {
         description={
           pending
             ? pending.mode === "reconciled"
-              ? `Confirm ${pending.r.orderNumber}: ${pending.r.amountCollected.toLocaleString("en-NG")} matches expected total.`
-              : `Flag ${pending.r.orderNumber} for follow-up. Difference: ${pending.r.difference.toLocaleString("en-NG")}.`
+              ? `Confirm ${pending.r.orderNumber}: ${formatNaira(pending.r.amountCollected)} matches expected total.`
+              : `Flag ${pending.r.orderNumber} for follow-up. Difference: ${formatNaira(pending.r.difference)}.`
             : ""
         }
         requireNote={pending?.mode === "discrepancy"}
@@ -108,7 +115,15 @@ export function ReconciliationScreen() {
         confirmLabel={pending?.mode === "reconciled" ? "Reconcile" : "Flag discrepancy"}
         onConfirm={async (note) => {
           if (!pending) return;
-          await reconcile.mutateAsync({ id: pending.r.id, status: pending.mode, note, by: user?.fullName ?? "Accountant" });
+          // The backend requires a note (3–500 chars) on both actions; supply a
+          // sensible default when the accountant didn't type one (reconcile path).
+          const finalNote =
+            note && note.trim().length >= 3
+              ? note.trim()
+              : pending.mode === "reconciled"
+                ? `Confirmed: ${formatNaira(pending.r.amountCollected)} matches expected total.`
+                : "Flagged for follow-up.";
+          await reconcile.mutateAsync({ id: pending.r.id, status: pending.mode, note: finalNote });
           toast.success(pending.mode === "reconciled" ? "Reconciled." : "Discrepancy flagged.");
         }}
       />

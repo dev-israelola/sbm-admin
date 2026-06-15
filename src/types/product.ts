@@ -1,21 +1,6 @@
-import type { Platform } from "./platform";
+export type ProductCategory = string;
 
-export type ProductCategory =
-  | "herbal-medicare"
-  | "herbal-wellness"
-  | "natural-health"
-  | "herbal-remedies"
-  | "supplements"
-  | "organic-support"
-  | "traditional-medicine"
-  | "gut-digestion"
-  | "womens-health"
-  | "mens-wellness"
-  | "detox-cleanses"
-  | "immunity-relief"
-  | "superfoods-wellness";
-
-export const PRODUCT_CATEGORY_LABEL: Record<ProductCategory, string> = {
+export const PRODUCT_CATEGORY_LABEL: Record<string, string> = {
   "herbal-medicare": "Herbal Medicare",
   "herbal-wellness": "Herbal wellness",
   "natural-health": "Natural health",
@@ -31,26 +16,6 @@ export const PRODUCT_CATEGORY_LABEL: Record<ProductCategory, string> = {
   "superfoods-wellness": "Superfoods & daily wellness",
 };
 
-export const PRODUCT_CATEGORIES_BY_PLATFORM: Record<Platform, ProductCategory[]> = {
-  harbs: [
-    "herbal-medicare",
-    "herbal-wellness",
-    "natural-health",
-    "herbal-remedies",
-    "supplements",
-    "organic-support",
-    "traditional-medicine",
-  ],
-  holistic: [
-    "gut-digestion",
-    "womens-health",
-    "mens-wellness",
-    "detox-cleanses",
-    "immunity-relief",
-    "superfoods-wellness",
-  ],
-};
-
 export type ProductStatus = "draft" | "active" | "archived";
 
 export interface Product {
@@ -60,6 +25,7 @@ export interface Product {
   slug: string;
   brand: string;
   category: ProductCategory;
+  categoryId?: string;
   description: string;
   shortDescription: string;
   benefits: string[];

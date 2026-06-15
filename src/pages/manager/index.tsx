@@ -9,10 +9,12 @@ import { DeliveryOperationsScreen } from "@/components/shared/DeliveryOperations
 import { DeliveryDetailScreen } from "@/components/shared/DeliveryDetailScreen";
 import { PickupHandoffsScreen } from "@/components/shared/PickupHandoffsScreen";
 import { ReportsScreen } from "@/components/shared/ReportsScreen";
+import { StaffScreen } from "@/components/shared/StaffScreen";
 
 const PATH = "/manager";
 
 export function ManagerOverviewPage() { return <AdminOverview roleScope="manager" />; }
+export function ManagerTeamPage() { return <StaffScreen />; }
 export function ManagerOrdersPage() { return <OrdersScreen rolePath={PATH} />; }
 export function ManagerOrderDetailPage() { return <OrderDetailScreen rolePath={PATH} />; }
 export function ManagerInventoryPage() { return <InventoryScreen rolePath={PATH} />; }

@@ -4,6 +4,7 @@ import { ROLE_HOME } from "@/types/role";
 
 export default function RoleHomeRedirect() {
   const user = useAuthStore((s) => s.user);
-  if (!user) return <Navigate to="/login" replace />;
+  const token = useAuthStore((s) => s.token);
+  if (!user || !token) return <Navigate to="/login" replace />;
   return <Navigate to={ROLE_HOME[user.role]} replace />;
 }

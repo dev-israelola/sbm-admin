@@ -1,4 +1,4 @@
-export type Platform = "harbs" | "holistic";
+export type Platform = "naturale" | "holistic";
 
 export interface PlatformConfig {
   label: string;
@@ -14,20 +14,22 @@ export interface PlatformConfig {
   settingsStoreEmail: string;
 }
 
+export const ALL_PLATFORMS: Platform[] = ["naturale", "holistic"];
+
 export const PLATFORM_CONFIG: Record<Platform, PlatformConfig> = {
-  harbs: {
-    label: "naturale",
+  naturale: {
+    label: "SBM Naturales",
     shortLabel: "Naturale",
     adminLabel: "naturale admin",
     logoLabel: "naturale",
     logoInitial: "n",
     overviewDescription:
       "Last 30 days of storefront trading. Operational metrics update in real time as your team works.",
-    storefrontLabel: "naturale",
-    defaultBrand: "naturale.",
-    sidebarTagline: "Herbal medicare · Lagos",
-    settingsStoreName: "naturale",
-    settingsStoreEmail: "hello@naturale.studio",
+    storefrontLabel: "Naturale",
+    defaultBrand: "SBM Naturales",
+    sidebarTagline: "Herbal medicare - Lagos",
+    settingsStoreName: "SBM Naturales",
+    settingsStoreEmail: "hello@sbmnaturales.com.ng",
   },
   holistic: {
     label: "SBM Holistic Farmacy",
@@ -39,23 +41,23 @@ export const PLATFORM_CONFIG: Record<Platform, PlatformConfig> = {
       "Last 30 days of holistic trading. Operational metrics update in real time as your team works.",
     storefrontLabel: "Holistic",
     defaultBrand: "SBM Holistic Farmacy",
-    sidebarTagline: "Holistic wellness · Lagos",
+    sidebarTagline: "Holistic wellness - Lagos",
     settingsStoreName: "SBM Holistic Farmacy",
     settingsStoreEmail: "hello@sbmholisticfarmacy.com",
   },
 };
 
 export const PLATFORM_LABEL: Record<Platform, string> = {
-  harbs: PLATFORM_CONFIG.harbs.label,
+  naturale: PLATFORM_CONFIG.naturale.label,
   holistic: PLATFORM_CONFIG.holistic.label,
 };
 
 export const PLATFORM_SHORT_LABEL: Record<Platform, string> = {
-  harbs: PLATFORM_CONFIG.harbs.shortLabel,
+  naturale: PLATFORM_CONFIG.naturale.shortLabel,
   holistic: PLATFORM_CONFIG.holistic.shortLabel,
 };
 
 export const PLATFORM_ADMIN_LABEL: Record<Platform, string> = {
-  harbs: PLATFORM_CONFIG.harbs.adminLabel,
+  naturale: PLATFORM_CONFIG.naturale.adminLabel,
   holistic: PLATFORM_CONFIG.holistic.adminLabel,
 };

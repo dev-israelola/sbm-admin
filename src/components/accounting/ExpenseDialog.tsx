@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -30,6 +31,7 @@ interface Props { open: boolean; onOpenChange: (v: boolean) => void; }
 export function ExpenseDialog({ open, onOpenChange }: Props) {
   const create = useCreateExpense();
   const user = useAuthStore((s) => s.user);
+  const [receiptUrl, setReceiptUrl] = useState<string | undefined>();
   const form = useForm<Values>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -48,10 +50,12 @@ export function ExpenseDialog({ open, onOpenChange }: Props) {
       vendor: v.vendor,
       paymentMethod: v.paymentMethod,
       note: v.note,
+      receiptFile: receiptUrl,
       recordedBy: user?.fullName ?? "Accountant",
     });
     toast.success("Expense logged.");
     onOpenChange(false);
+    setReceiptUrl(undefined);
     form.reset();
   }
 
@@ -98,7 +102,7 @@ export function ExpenseDialog({ open, onOpenChange }: Props) {
             )}
           />
           <FormTextarea label="Note (optional)" {...form.register("note")} />
-          <FileUploadPlaceholder label="Receipt (optional)" />
+          <FileUploadPlaceholder label="Receipt (optional)" uploadKind="EXPENSE_RECEIPT" onUploaded={setReceiptUrl} />
 
           <DialogFooter>
             <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>

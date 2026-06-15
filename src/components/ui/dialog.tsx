@@ -34,7 +34,7 @@ export const DialogContent = React.forwardRef<
       className={cn(
         "fixed inset-x-3 bottom-3 top-auto z-50 grid max-h-[calc(100dvh-1.5rem)] w-auto gap-4 overflow-y-auto overscroll-contain",
         "rounded-2xl border border-line/70 bg-surface p-4 shadow-lift",
-        "sm:inset-x-auto sm:left-1/2 sm:right-auto sm:top-1/2 sm:bottom-auto sm:w-full sm:max-h-[calc(100dvh-4rem)] sm:max-w-lg sm:-translate-x-1/2 sm:-translate-y-1/2 sm:overflow-hidden sm:p-6",
+        "sm:inset-x-auto sm:left-1/2 sm:right-auto sm:top-1/2 sm:bottom-auto sm:w-full sm:max-h-[calc(100dvh-4rem)] sm:max-w-lg sm:-translate-x-1/2 sm:-translate-y-1/2 sm:overflow-y-auto sm:p-6",
         "data-[state=open]:animate-fade-in",
         className,
       )}

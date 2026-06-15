@@ -58,6 +58,8 @@ export function AdminOverview({ roleScope = "admin" }: Props) {
   const inventory = useInventory();
   const refunds = useRefunds();
   const deliveries = useDeliveries({});
+  const inventoryItems = inventory.data?.items ?? [];
+  const deliveryItems = deliveries.data?.items ?? [];
 
   const s = summary.data?.summary;
   const counts = summary.data?.counts;
@@ -109,20 +111,19 @@ export function AdminOverview({ roleScope = "admin" }: Props) {
   }, [orders.data]);
 
   const topSellers = useMemo(() => {
-    if (!inventory.data) return [];
-    return [...inventory.data]
+    return [...inventoryItems]
       .sort((a, b) => b.soldStock - a.soldStock)
       .slice(0, 6)
       .map((p) => ({ name: p.name.length > 22 ? p.name.slice(0, 22) + "…" : p.name, sold: p.soldStock }));
-  }, [inventory.data]);
+  }, [inventoryItems]);
 
   const lowStock = useMemo(
     () =>
-      (inventory.data ?? [])
+      inventoryItems
         .filter((p) => inventoryStatus(p) !== "in-stock")
         .sort((a, b) => a.availableStock - b.availableStock)
         .slice(0, 6),
-    [inventory.data],
+    [inventoryItems],
   );
 
   const recentOrders = useMemo(() => orders.data?.items.slice(0, 6) ?? [], [orders.data]);
@@ -131,7 +132,7 @@ export function AdminOverview({ roleScope = "admin" }: Props) {
     [orders.data],
   );
   const pendingRefunds = useMemo(
-    () => (refunds.data ?? []).filter((r) => ["submitted", "under-review"].includes(r.status)).slice(0, 5),
+    () => (refunds.data?.items ?? []).filter((r) => ["submitted", "under-review"].includes(r.status)).slice(0, 5),
     [refunds.data],
   );
   const pendingPickup = useMemo(
@@ -139,8 +140,8 @@ export function AdminOverview({ roleScope = "admin" }: Props) {
     [orders.data],
   );
   const deliveryExceptions = useMemo(
-    () => (deliveries.data ?? []).filter((d) => d.status === "failed-delivery" || d.collectionStatus === "discrepancy").slice(0, 5),
-    [deliveries.data],
+    () => deliveryItems.filter((d) => d.status === "failed-delivery" || d.collectionStatus === "discrepancy").slice(0, 5),
+    [deliveryItems],
   );
 
   const basePath = roleScope === "manager" ? "/manager" : "/admin";

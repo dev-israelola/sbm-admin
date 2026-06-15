@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { ShoppingBag } from "lucide-react";
 import { FilterBar } from "@/components/ui/filter-bar";
@@ -15,6 +15,8 @@ import { OrderStatusBadge, PaymentStatusBadge } from "@/components/orders/status
 import { MoneyDisplay } from "@/components/ui/money";
 import { Badge } from "@/components/ui/badge";
 import { useOrders } from "@/features/orders/useOrders";
+import { PaginationFooter } from "@/components/ui/pagination-footer";
+import { DEFAULT_PAGE_SIZE } from "@/lib/pagination";
 import { formatDate } from "@/lib/format";
 import { ORDER_STATUS_OPTIONS } from "@/lib/constants";
 import type { AdminOrder } from "@/types/order";
@@ -42,13 +44,20 @@ export function OrdersScreen({
   const [status, setStatus] = useState<string>(urlStatus ?? defaultStatus ?? "all");
   const [paymentMethod, setPaymentMethod] = useState<string>("all");
   const [deliveryMethod, setDeliveryMethod] = useState<string>("all");
+  const [page, setPage] = useState(1);
 
   const { data, isLoading } = useOrders({
     q,
     status: status === "all" ? undefined : status,
     paymentMethod: paymentMethod === "all" ? undefined : paymentMethod,
     deliveryMethod: deliveryMethod === "all" ? undefined : deliveryMethod,
+    page,
+    limit: DEFAULT_PAGE_SIZE,
   });
+
+  useEffect(() => {
+    setPage(1);
+  }, [q, status, paymentMethod, deliveryMethod]);
 
   const columns: DataTableColumn<AdminOrder>[] = useMemo(
     () => [
@@ -168,6 +177,7 @@ export function OrdersScreen({
           </div>
         }
       />
+      <PaginationFooter meta={data?.meta} page={page} loading={isLoading} itemLabel="orders" onPageChange={setPage} />
     </div>
   );
 }

@@ -14,10 +14,10 @@ import type { Platform } from "@/types/platform";
 const lag = () => delay(220 + Math.random() * 220);
 
 const stateByPlatform = createPlatformStateStore();
-const state = stateByPlatform.harbs;
+const state = stateByPlatform.naturale;
 
 function resolvePlatform(request: Request): Platform {
-  return request.headers.get("x-platform") === "holistic" ? "holistic" : "harbs";
+  return request.headers.get("x-platform") === "holistic" ? "holistic" : "naturale";
 }
 
 function currentState(request: Request) {

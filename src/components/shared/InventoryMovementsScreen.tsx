@@ -1,9 +1,12 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { ChevronLeft } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
 import { Badge } from "@/components/ui/badge";
 import { useMovements } from "@/features/products/useProducts";
+import { PaginationFooter } from "@/components/ui/pagination-footer";
+import { DEFAULT_PAGE_SIZE } from "@/lib/pagination";
 import { MOVEMENT_LABEL, type InventoryMovement } from "@/types/inventory";
 import { formatDateTime } from "@/lib/format";
 
@@ -18,7 +21,8 @@ const VARIANT: Record<InventoryMovement["type"], any> = {
 };
 
 export function InventoryMovementsScreen({ rolePath }: { rolePath: string }) {
-  const { data, isLoading } = useMovements();
+  const [page, setPage] = useState(1);
+  const { data, isLoading } = useMovements({ page, limit: DEFAULT_PAGE_SIZE });
 
   const columns: DataTableColumn<InventoryMovement>[] = [
     {
@@ -41,7 +45,8 @@ export function InventoryMovementsScreen({ rolePath }: { rolePath: string }) {
       </Link>
       <div className="mt-2">
         <PageHeader title="Movement log" description="Every change to inventory, in order." eyebrow="Catalog" />
-        <DataTable rows={data} columns={columns} loading={isLoading} rowKey={(m) => m.id} dense />
+        <DataTable rows={data?.items} columns={columns} loading={isLoading} rowKey={(m) => m.id} dense />
+        <PaginationFooter meta={data?.meta} page={page} loading={isLoading} itemLabel="movements" onPageChange={setPage} />
       </div>
     </div>
   );

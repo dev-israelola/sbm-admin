@@ -1,16 +1,64 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
+import { DEFAULT_PAGE_SIZE, paginated } from "@/lib/pagination";
 import { qk } from "@/lib/query-client";
 import { useAuthStore } from "@/store/auth-store";
 import type { Consultation, ConsultationRecommendation } from "@/types/consultation";
 
-export function useConsultations() {
+function normalizeConsultation(raw: Record<string, any>): Consultation {
+  return {
+    id: raw.id,
+    customerId: raw.userId ?? raw.customerId ?? "",
+    customerName: raw.customerName ?? raw.user?.displayName ?? "Customer",
+    customerEmail: raw.customerEmail ?? raw.user?.email ?? "",
+    customerPhone: raw.customerPhone ?? raw.user?.phone ?? "",
+    primaryConcern: raw.primaryConcern ?? "",
+    goal: raw.wellnessGoal ?? raw.goal ?? "",
+    preferredDate: raw.preferredDate ?? raw.createdAt,
+    preferredTime: raw.preferredTime ?? "",
+    notes: raw.notes,
+    status: String(raw.status ?? "pending").toLowerCase().replace(/_/g, "-") as Consultation["status"],
+    consultantId: raw.assignedConsultantId ?? raw.consultantId,
+    consultantName: raw.consultantName,
+    recommendationId: raw.recommendationId ?? raw.id,
+    createdAt: raw.createdAt,
+  };
+}
+
+function normalizeRecommendation(raw: Record<string, any>): ConsultationRecommendation {
+  return {
+    id: raw.id,
+    consultationId: raw.consultationId,
+    consultantId: raw.consultantId ?? "",
+    consultantName: raw.consultantName ?? "Consultant",
+    title: raw.title ?? "Recommendation",
+    note: raw.consultantNote ?? raw.note ?? "",
+    routine: raw.routine ?? [],
+    products: (raw.products ?? []).map((item: Record<string, any>) => ({
+      productId: item.productId,
+      usage: item.note ?? item.usage ?? "",
+    })),
+    additionalAdvice: raw.usageInstructions ?? raw.additionalAdvice,
+    sent: true,
+    createdAt: raw.createdAt,
+  };
+}
+
+export function useConsultations(params: { status?: string; page?: number; limit?: number } = {}) {
   const activePlatform = useAuthStore((s) => s.activePlatform);
+  const page = params.page ?? 1;
+  const limit = params.limit ?? DEFAULT_PAGE_SIZE;
   return useQuery({
-    queryKey: qk.consultations(activePlatform),
+    queryKey: qk.consultations(activePlatform, params),
     queryFn: async () => {
-      const { data } = await api.get<Consultation[]>("/consultations");
-      return data;
+      const search = new URLSearchParams({ page: String(page), limit: String(limit) });
+      if (params.status) search.set("status", params.status.toUpperCase().replace(/-/g, "_"));
+      const { data } = await api.get<unknown[] | { items?: unknown[]; meta?: any }>(`/consultations?${search.toString()}`);
+      const result = paginated(data, page, limit);
+      return {
+        items: result.items.map((item) => normalizeConsultation(item as Record<string, any>)),
+        meta: result.meta,
+      };
     },
   });
 }
@@ -20,8 +68,8 @@ export function useConsultation(id: string | undefined) {
   return useQuery({
     queryKey: qk.consultation(activePlatform, id ?? ""),
     queryFn: async () => {
-      const { data } = await api.get<Consultation>(`/consultations/${id}`);
-      return data;
+      const { data } = await api.get<Record<string, any>>(`/consultations/${id}`);
+      return normalizeConsultation(data);
     },
     enabled: !!id,
   });
@@ -32,8 +80,10 @@ export function useRecommendation(id: string | undefined) {
   return useQuery({
     queryKey: qk.recommendation(activePlatform, id ?? ""),
     queryFn: async () => {
-      const { data } = await api.get<ConsultationRecommendation>(`/recommendations/${id}`);
-      return data;
+      const { data } = await api.get<unknown[] | { items?: unknown[] }>(`/consultations/${id}/recommendations`);
+      const items = Array.isArray(data) ? data : data.items ?? [];
+      if (!items[0]) throw new Error("Recommendation not found");
+      return normalizeRecommendation(items[0] as Record<string, any>);
     },
     enabled: !!id,
   });
@@ -43,12 +93,11 @@ export function useAssignConsultant() {
   const activePlatform = useAuthStore((s) => s.activePlatform);
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, consultantId, consultantName }: any) => {
-      const { data } = await api.post<Consultation>(`/consultations/${id}/assign`, {
-        consultantId,
-        consultantName,
+    mutationFn: async ({ id, consultantId }: any) => {
+      const { data } = await api.patch<Record<string, any>>(`/consultations/${id}/assign`, {
+        assignedConsultantId: consultantId,
       });
-      return data;
+      return normalizeConsultation(data);
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: qk.consultations(activePlatform) }),
   });
@@ -58,12 +107,20 @@ export function useCreateRecommendation() {
   const activePlatform = useAuthStore((s) => s.activePlatform);
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, ...body }: any) => {
-      const { data } = await api.post<ConsultationRecommendation>(
-        `/consultations/${id}/recommendation`,
-        body,
+    mutationFn: async ({ id, note, products, title, additionalAdvice }: any) => {
+      const { data } = await api.post<Record<string, any>>(
+        `/consultations/${id}/recommendations`,
+        {
+          title,
+          consultantNote: note,
+          usageInstructions: additionalAdvice,
+          products: (products ?? []).map((item: Record<string, any>) => ({
+            productId: item.productId,
+            note: item.usage,
+          })),
+        },
       );
-      return data;
+      return normalizeRecommendation(data);
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: qk.consultations(activePlatform) });

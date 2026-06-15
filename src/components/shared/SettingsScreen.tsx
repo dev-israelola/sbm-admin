@@ -7,10 +7,15 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useAuthStore } from "@/store/auth-store";
 import { PLATFORM_CONFIG } from "@/types/platform";
+import { useSaveSettings, useSettings } from "@/features/settings/useSettings";
+
+const SETTING_KEY = "admin.settings";
 
 export function SettingsScreen() {
   const activePlatform = useAuthStore((s) => s.activePlatform);
   const platform = PLATFORM_CONFIG[activePlatform];
+  const savedSettings = useSettings();
+  const saveSettings = useSaveSettings();
   const [settings, setSettings] = useState({
     storeName: platform.settingsStoreName,
     storeEmail: platform.settingsStoreEmail,
@@ -37,10 +42,18 @@ export function SettingsScreen() {
     }));
   }, [platform.settingsStoreEmail, platform.settingsStoreName]);
 
+  useEffect(() => {
+    const row = savedSettings.data?.find((item) => item.key === SETTING_KEY);
+    if (row?.value && typeof row.value === "object") {
+      setSettings((current) => ({ ...current, ...(row.value as Partial<typeof settings>) }));
+    }
+  }, [savedSettings.data]);
+
   function patch<K extends keyof typeof settings>(k: K, v: (typeof settings)[K]) {
     setSettings((s) => ({ ...s, [k]: v }));
   }
-  function save(section: string) {
+  async function save(section: string) {
+    await saveSettings.mutateAsync({ [SETTING_KEY]: settings });
     toast.success(`${section} settings saved.`);
   }
 
@@ -64,7 +77,7 @@ export function SettingsScreen() {
             <FormInput label="Store name" value={settings.storeName} onChange={(e) => patch("storeName", e.target.value)} />
             <FormInput label="Contact email" value={settings.storeEmail} onChange={(e) => patch("storeEmail", e.target.value)} />
             <FormInput label="Contact phone" value={settings.storePhone} onChange={(e) => patch("storePhone", e.target.value)} />
-            <Button onClick={() => save("Store")}>Save changes</Button>
+            <Button onClick={() => save("Store")} disabled={saveSettings.isPending}>Save changes</Button>
           </section>
         </TabsContent>
 
@@ -75,7 +88,7 @@ export function SettingsScreen() {
             <FormSwitch label="Enable Payment on Delivery" description="Allow customers to pay when their order arrives." checked={settings.podEnabled} onCheckedChange={(v) => patch("podEnabled", v)} />
             <FormSwitch label="POD verification required" description="POD orders must be verified before fulfilment." checked={settings.podVerificationRequired} onCheckedChange={(v) => patch("podVerificationRequired", v)} />
             <FormSwitch label="POD collection reconciliation required" description="Mark POD complete only after accounting reconciles cash." checked={settings.podReconciliationRequired} onCheckedChange={(v) => patch("podReconciliationRequired", v)} />
-            <Button className="mt-3" onClick={() => save("Payment")}>Save changes</Button>
+            <Button className="mt-3" onClick={() => save("Payment")} disabled={saveSettings.isPending}>Save changes</Button>
           </section>
         </TabsContent>
 
@@ -84,7 +97,7 @@ export function SettingsScreen() {
             <h2 className="font-display text-base">Delivery</h2>
             <FormInput label="Default delivery fee (₦)" type="number" step="100" value={settings.defaultDeliveryFee} onChange={(e) => patch("defaultDeliveryFee", Number(e.target.value))} />
             <FormInput label="Free shipping threshold (₦)" type="number" step="1000" value={settings.freeShippingThreshold} onChange={(e) => patch("freeShippingThreshold", Number(e.target.value))} />
-            <Button onClick={() => save("Delivery")}>Save changes</Button>
+            <Button onClick={() => save("Delivery")} disabled={saveSettings.isPending}>Save changes</Button>
           </section>
         </TabsContent>
 
@@ -92,7 +105,7 @@ export function SettingsScreen() {
           <section className="card max-w-xl space-y-3 p-5">
             <h2 className="font-display text-base">Tax</h2>
             <FormInput label="VAT %" type="number" step="0.1" value={settings.taxPercent} onChange={(e) => patch("taxPercent", Number(e.target.value))} />
-            <Button onClick={() => save("Tax")}>Save changes</Button>
+            <Button onClick={() => save("Tax")} disabled={saveSettings.isPending}>Save changes</Button>
           </section>
         </TabsContent>
 
@@ -101,7 +114,7 @@ export function SettingsScreen() {
             <h2 className="font-display text-base">Rewards</h2>
             <FormInput label="Points per ₦100 spent" type="number" step="0.01" value={settings.pointsPerNaira * 100} onChange={(e) => patch("pointsPerNaira", Number(e.target.value) / 100)} />
             <FormInput label="₦ per point at redemption" type="number" step="0.5" value={settings.pointValue} onChange={(e) => patch("pointValue", Number(e.target.value))} />
-            <Button onClick={() => save("Rewards")}>Save changes</Button>
+            <Button onClick={() => save("Rewards")} disabled={saveSettings.isPending}>Save changes</Button>
           </section>
         </TabsContent>
 
@@ -111,7 +124,7 @@ export function SettingsScreen() {
             <FormSwitch label="New order" description="Alert ops when an order is placed." checked={settings.notifNewOrder} onCheckedChange={(v) => patch("notifNewOrder", v)} />
             <FormSwitch label="Low stock" description="Alert catalog team when SKU crosses threshold." checked={settings.notifLowStock} onCheckedChange={(v) => patch("notifLowStock", v)} />
             <FormSwitch label="Refund requested" description="Alert support team for refund decisions." checked={settings.notifRefundRequest} onCheckedChange={(v) => patch("notifRefundRequest", v)} />
-            <Button className="mt-3" onClick={() => save("Notifications")}>Save changes</Button>
+            <Button className="mt-3" onClick={() => save("Notifications")} disabled={saveSettings.isPending}>Save changes</Button>
           </section>
         </TabsContent>
       </Tabs>

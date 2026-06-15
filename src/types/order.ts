@@ -1,3 +1,5 @@
+import type { DeliveryStatus } from "./delivery";
+
 export type PaymentMethod = "paystack" | "pod";
 
 export type DeliveryMethod = "home" | "pickup";
@@ -130,7 +132,18 @@ export interface AdminOrder {
   podCollection?: PodCollection;
   paystackPayment?: PaystackPayment;
   deliveryId?: string;
+  delivery?: OrderDeliveryInfo;
   pickupHandoffId?: string;
   verifiedBy?: string;
   internalNotes: { id: string; by: string; at: string; body: string }[];
+}
+
+export interface OrderDeliveryInfo {
+  id: string;
+  status: DeliveryStatus;
+  deliveryType: "internal" | "third-party";
+  assigneeId?: string;
+  assigneeName?: string;
+  provider?: string;
+  trackingNumber?: string;
 }

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { MessageSquare } from "lucide-react";
 import { FilterBar } from "@/components/ui/filter-bar";
@@ -9,6 +9,8 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { useConsultations } from "@/features/consultations/useConsultations";
+import { PaginationFooter } from "@/components/ui/pagination-footer";
+import { DEFAULT_PAGE_SIZE } from "@/lib/pagination";
 import { formatDate } from "@/lib/format";
 import type { Consultation } from "@/types/consultation";
 
@@ -21,16 +23,24 @@ const STATUS_BADGE: Record<Consultation["status"], any> = {
 };
 
 export function ConsultationsScreen({ rolePath }: { rolePath: string }) {
-  const { data, isLoading } = useConsultations();
   const [q, setQ] = useState("");
   const [status, setStatus] = useState("all");
+  const [page, setPage] = useState(1);
+  const { data, isLoading } = useConsultations({
+    status: status === "all" ? undefined : status,
+    page,
+    limit: DEFAULT_PAGE_SIZE,
+  });
+
+  useEffect(() => {
+    setPage(1);
+  }, [q, status]);
 
   const filtered = useMemo(() => {
-    if (!data) return undefined;
+    if (!data?.items) return undefined;
     const search = q.toLowerCase();
-    return data.filter((c) => {
+    return data.items.filter((c) => {
       if (search && !`${c.customerName} ${c.primaryConcern}`.toLowerCase().includes(search)) return false;
-      if (status !== "all" && c.status !== status) return false;
       return true;
     });
   }, [data, q, status]);
@@ -83,6 +93,7 @@ export function ConsultationsScreen({ rolePath }: { rolePath: string }) {
           </div>
         }
       />
+      <PaginationFooter meta={data?.meta} page={page} loading={isLoading} itemLabel="consultations" onPageChange={setPage} />
     </div>
   );
 }

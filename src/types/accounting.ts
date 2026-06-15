@@ -97,3 +97,19 @@ export interface AccountingSummary {
   cashCollected: number;
   unreconciledPod: number;
 }
+
+export interface ProfitLossReport {
+  currency?: string;
+  grossSales: number;
+  discounts: number;
+  rewardDiscounts: number;
+  refunds: number;
+  netSales: number;
+  deliveryFeesCharged: number;
+  tax: number;
+  cogs: number;
+  gatewayFees: number;
+  expensesTotal: number;
+  expensesByCategory: { category: ExpenseCategory | string; amount: number }[];
+  estimatedProfit: number;
+}

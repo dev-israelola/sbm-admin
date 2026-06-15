@@ -1,13 +1,17 @@
 import { useState } from "react";
 import { Upload } from "lucide-react";
+import { toast } from "sonner";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import { uploadFile, type UploadKind } from "@/lib/uploads";
 
 interface FileUploadPlaceholderProps {
   label: string;
   hint?: string;
   className?: string;
   onFileSelected?: (name: string) => void;
+  onUploaded?: (url: string) => void;
+  uploadKind?: UploadKind;
 }
 
 export function FileUploadPlaceholder({
@@ -15,8 +19,11 @@ export function FileUploadPlaceholder({
   hint,
   className,
   onFileSelected,
+  onUploaded,
+  uploadKind = "OTHER",
 }: FileUploadPlaceholderProps) {
   const [fileName, setFileName] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
   return (
     <div className={cn("flex flex-col gap-1.5", className)}>
       <Label>{label}</Label>
@@ -32,14 +39,27 @@ export function FileUploadPlaceholder({
           type="file"
           className="sr-only"
           accept="image/*,application/pdf"
-          onChange={(e) => {
+          onChange={async (e) => {
             const f = e.target.files?.[0];
             if (f) {
-              setFileName(f.name);
-              onFileSelected?.(f.name);
+              setBusy(true);
+              try {
+                const uploaded = await uploadFile(f, uploadKind);
+                setFileName(f.name);
+                onFileSelected?.(f.name);
+                onUploaded?.(uploaded.url);
+              } catch (error) {
+                toast.error(`Could not upload ${f.name}.`, {
+                  description: error instanceof Error ? error.message : undefined,
+                });
+              } finally {
+                setBusy(false);
+                e.currentTarget.value = "";
+              }
             }
           }}
         />
+        {busy && <span className="ml-auto text-[11px] text-ink-muted">Uploading...</span>}
       </label>
     </div>
   );

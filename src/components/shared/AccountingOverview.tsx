@@ -18,20 +18,20 @@ export function AccountingOverview() {
   const sales = useSales();
   const expenses = useExpenses();
   const s = summary.data;
+  const salesItems = sales.data?.items ?? [];
+  const expenseItems = expenses.data?.items ?? [];
 
   const expenseByCategory = useMemo(() => {
-    if (!expenses.data) return [];
     const byCat: Record<string, number> = {};
-    expenses.data.forEach((e) => {
+    expenseItems.forEach((e) => {
       byCat[e.category] = (byCat[e.category] ?? 0) + e.amount;
     });
     return Object.entries(byCat)
       .map(([k, v]) => ({ name: EXPENSE_CATEGORY_LABEL[k as keyof typeof EXPENSE_CATEGORY_LABEL] ?? k, amount: v }))
       .sort((a, b) => b.amount - a.amount);
-  }, [expenses.data]);
+  }, [expenseItems]);
 
   const salesByDay = useMemo(() => {
-    if (!sales.data) return [];
     const buckets: Record<string, { date: string; gross: number; net: number }> = {};
     const now = new Date();
     for (let i = 13; i >= 0; i--) {
@@ -40,7 +40,7 @@ export function AccountingOverview() {
       const k = d.toISOString().slice(0, 10);
       buckets[k] = { date: k.slice(5), gross: 0, net: 0 };
     }
-    sales.data.forEach((r) => {
+    salesItems.forEach((r) => {
       const k = r.date.slice(0, 10);
       if (k in buckets) {
         buckets[k].gross += r.grossAmount;
@@ -48,7 +48,7 @@ export function AccountingOverview() {
       }
     });
     return Object.values(buckets);
-  }, [sales.data]);
+  }, [salesItems]);
 
   return (
     <div>
@@ -76,7 +76,7 @@ export function AccountingOverview() {
                 </defs>
                 <CartesianGrid stroke="hsl(var(--line))" strokeDasharray="3 3" vertical={false} />
                 <XAxis dataKey="date" tick={{ fontSize: 11, fill: "hsl(var(--ink-muted))" }} axisLine={false} tickLine={false} />
-                <YAxis tickFormatter={(v) => `₦${(v / 1000).toFixed(0)}k`} tick={{ fontSize: 11, fill: "hsl(var(--ink-muted))" }} axisLine={false} tickLine={false} width={48} />
+                <YAxis tickFormatter={(v) => `₦${(v / 100000).toFixed(0)}k`} tick={{ fontSize: 11, fill: "hsl(var(--ink-muted))" }} axisLine={false} tickLine={false} width={48} />
                 <Tooltip contentStyle={{ background: "white", border: "1px solid hsl(var(--line))", borderRadius: 8, fontSize: 12 }} formatter={(v: number) => formatNaira(v)} />
                 <Area type="monotone" dataKey="gross" stroke="hsl(161 33% 27%)" strokeWidth={2} fill="url(#grossF)" />
                 <Area type="monotone" dataKey="net" stroke="hsl(33 79% 44%)" strokeWidth={2} fill="url(#netF)" />
@@ -90,7 +90,7 @@ export function AccountingOverview() {
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={expenseByCategory} layout="vertical" margin={{ top: 4, left: 120, right: 16, bottom: 0 }}>
                 <CartesianGrid stroke="hsl(var(--line))" strokeDasharray="3 3" horizontal={false} />
-                <XAxis type="number" tick={{ fontSize: 11, fill: "hsl(var(--ink-muted))" }} axisLine={false} tickLine={false} tickFormatter={(v) => `₦${(v / 1000).toFixed(0)}k`} />
+                <XAxis type="number" tick={{ fontSize: 11, fill: "hsl(var(--ink-muted))" }} axisLine={false} tickLine={false} tickFormatter={(v) => `₦${(v / 100000).toFixed(0)}k`} />
                 <YAxis type="category" dataKey="name" tick={{ fontSize: 11, fill: "hsl(var(--ink))" }} axisLine={false} tickLine={false} width={120} />
                 <Tooltip contentStyle={{ background: "white", border: "1px solid hsl(var(--line))", borderRadius: 8, fontSize: 12 }} formatter={(v: number) => formatNaira(v)} />
                 <Bar dataKey="amount" fill="hsl(161 33% 27%)" radius={[0, 6, 6, 0]} />

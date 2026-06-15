@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -17,6 +18,7 @@ import { FormTextarea } from "@/components/forms/FormTextarea";
 import { FileUploadPlaceholder } from "@/components/forms/FileUploadPlaceholder";
 import { useConfirmPodPayment } from "@/features/orders/useOrders";
 import { useAuthStore } from "@/store/auth-store";
+import { koboToNaira, nairaToKobo } from "@/lib/format";
 
 const schema = z.object({
   amount: z.coerce.number().min(1, "Amount required"),
@@ -32,16 +34,18 @@ interface Props {
   onOpenChange: (v: boolean) => void;
   orderId: string;
   orderNumber: string;
+  /** Outstanding amount in kobo. */
   defaultAmount: number;
 }
 
 export function PodPaymentCollectionDialog({ open, onOpenChange, orderId, orderNumber, defaultAmount }: Props) {
   const user = useAuthStore((s) => s.user);
   const confirm = useConfirmPodPayment();
+  const [proofUrl, setProofUrl] = useState<string | null>(null);
   const form = useForm<Values>({
     resolver: zodResolver(schema),
     defaultValues: {
-      amount: defaultAmount,
+      amount: koboToNaira(defaultAmount),
       method: "cash",
       collectedBy: user?.fullName ?? "",
       reference: "",
@@ -49,24 +53,30 @@ export function PodPaymentCollectionDialog({ open, onOpenChange, orderId, orderN
     },
   });
 
+  function reset() {
+    form.reset();
+    setProofUrl(null);
+  }
+
   async function submit(values: Values) {
     await confirm.mutateAsync({
       id: orderId,
-      amount: values.amount,
+      amount: nairaToKobo(values.amount),
       method: values.method,
       collectedBy: values.collectedBy,
       collectedAt: new Date().toISOString(),
       reference: values.reference,
       note: values.note,
+      proofUrl: proofUrl ?? undefined,
     });
     toast.success(`Payment recorded on ${orderNumber}.`);
     onOpenChange(false);
-    form.reset();
+    reset();
   }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Record POD payment</DialogTitle>
           <DialogDescription>{orderNumber}. Submitting moves the order to "cash collected" and queues reconciliation.</DialogDescription>
@@ -74,9 +84,9 @@ export function PodPaymentCollectionDialog({ open, onOpenChange, orderId, orderN
 
         <form onSubmit={form.handleSubmit(submit)} className="space-y-3">
           <FormInput
-            label="Amount collected"
+            label="Amount collected (₦)"
             type="number"
-            step="100"
+            step="1"
             {...form.register("amount")}
             error={form.formState.errors.amount?.message}
           />
@@ -99,7 +109,12 @@ export function PodPaymentCollectionDialog({ open, onOpenChange, orderId, orderN
           <FormInput label="Collected by" {...form.register("collectedBy")} error={form.formState.errors.collectedBy?.message} />
           <FormInput label="Reference (optional)" placeholder="POS slip, transfer ref…" {...form.register("reference")} />
           <FormTextarea label="Note (optional)" {...form.register("note")} />
-          <FileUploadPlaceholder label="Upload proof (optional)" hint="Receipt or POS slip" />
+          <FileUploadPlaceholder
+            label="Upload proof (optional)"
+            hint="Receipt or POS slip"
+            uploadKind="PAYMENT_PROOF"
+            onUploaded={(url) => setProofUrl(url)}
+          />
 
           <DialogFooter>
             <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>

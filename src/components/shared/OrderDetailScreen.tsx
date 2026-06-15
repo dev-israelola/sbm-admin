@@ -28,6 +28,7 @@ import { OrderStatusBadge, PaymentStatusBadge, ORDER_STATUS_COPY } from "@/compo
 import { OrderTimeline } from "@/components/orders/OrderTimeline";
 import { PodVerificationDialog } from "@/components/orders/PodVerificationDialog";
 import { PodPaymentCollectionDialog } from "@/components/orders/PodPaymentCollectionDialog";
+import { DeliveryAssignDialog } from "@/components/delivery/DeliveryAssignDialog";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { PermissionGate } from "@/components/layout/PermissionGate";
 import { can } from "@/lib/permissions";
@@ -49,6 +50,7 @@ export function OrderDetailScreen({ rolePath }: Props) {
   const reconcile = useReconcileOrder();
 
   const [verifyOpen, setVerifyOpen] = useState(false);
+  const [assignOpen, setAssignOpen] = useState(false);
   const [collectOpen, setCollectOpen] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
   const [reconcileOpen, setReconcileOpen] = useState<"reconciled" | "discrepancy" | null>(null);
@@ -80,13 +82,26 @@ export function OrderDetailScreen({ rolePath }: Props) {
   const isPOD = order.paymentMethod === "pod";
   const isPaystack = order.paymentMethod === "paystack";
 
-  const advanceFlow: { label: string; next: OrderStatus; show: boolean }[] = [
+  const isPickup = order.deliveryMethod === "pickup";
+  const deliveryAssigned = Boolean(order.delivery?.assigneeId || order.delivery?.provider);
+
+  const advanceFlow: { label: string; next: OrderStatus; show: boolean; disabled?: boolean }[] = [
     { label: "Mark verified", next: "verified", show: isPOD && order.status === "pending-verification" },
     { label: "Mark packed", next: "packed", show: ["verified", "pending-fulfillment", "payment-confirmed"].includes(order.status) },
-    { label: "Ready for dispatch", next: "ready-for-dispatch", show: order.status === "packed" },
-    { label: "Mark in transit", next: "in-transit", show: order.status === "ready-for-dispatch" },
-    { label: "Mark delivered", next: "delivered", show: order.status === "in-transit" },
-    { label: "Complete order", next: "completed", show: order.status === "delivered" && isPaystack },
+    // Pickup-station path
+    { label: "Mark ready for pickup", next: "ready-for-pickup", show: isPickup && order.status === "packed" },
+    { label: "Mark picked up", next: "picked-up", show: isPickup && order.status === "ready-for-pickup" },
+    // Home-delivery path (dispatch is gated on an assigned shipment)
+    {
+      label: deliveryAssigned ? "Ready for dispatch" : "Assign a rider to dispatch",
+      next: "ready-for-dispatch",
+      show: !isPickup && order.status === "packed",
+      disabled: !deliveryAssigned,
+    },
+    { label: "Mark in transit", next: "in-transit", show: !isPickup && order.status === "ready-for-dispatch" },
+    { label: "Mark delivered", next: "delivered", show: !isPickup && order.status === "in-transit" },
+    // Completion (both paths)
+    { label: "Complete order", next: "completed", show: ["delivered", "picked-up"].includes(order.status) && isPaystack },
   ];
 
   function transition(status: OrderStatus, label: string) {
@@ -331,13 +346,31 @@ export function OrderDetailScreen({ rolePath }: Props) {
                 </>
               )}
 
+              {/* Home delivery: assign / reassign the shipment to a rider or 3PL */}
+              {!isPickup &&
+                order.delivery &&
+                can(role, "orders.update") &&
+                !["delivered", "completed", "cancelled", "returned", "refunded"].includes(order.status) && (
+                  <Button
+                    className="w-full"
+                    size="md"
+                    variant={deliveryAssigned ? "outline" : "primary"}
+                    onClick={() => setAssignOpen(true)}
+                  >
+                    <Truck className="h-4 w-4" />
+                    {deliveryAssigned
+                      ? `Reassign delivery${order.delivery.assigneeName ? ` · ${order.delivery.assigneeName}` : ""}`
+                      : "Assign delivery"}
+                  </Button>
+                )}
+
               {advanceFlow.filter((a) => a.show && can(role, "orders.update")).map((a) => (
                 <Button
                   key={a.next}
                   variant="outline"
                   className="w-full"
                   onClick={() => transition(a.next, a.label)}
-                  disabled={updateStatus.isPending}
+                  disabled={updateStatus.isPending || a.disabled}
                 >
                   {updateStatus.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
                   {a.label}
@@ -385,6 +418,14 @@ export function OrderDetailScreen({ rolePath }: Props) {
         orderNumber={order.number}
         defaultAmount={order.total}
       />
+      {order.delivery && (
+        <DeliveryAssignDialog
+          open={assignOpen}
+          onOpenChange={setAssignOpen}
+          deliveryId={order.delivery.id}
+          orderNumber={order.number}
+        />
+      )}
       <ConfirmDialog
         open={cancelOpen}
         onOpenChange={setCancelOpen}

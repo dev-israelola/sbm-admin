@@ -267,7 +267,7 @@ function toHolisticExpenses(replacements: Array<[string, string]>) {
     id: `hexp_${String(index + 1).padStart(3, "0")}`,
     title:
       index % 4 === 0
-        ? replaceString(expense.title, replacements).replace("harbs", "SBM Holistic Farmacy")
+        ? replaceString(expense.title, replacements).replace("naturale", "SBM Holistic Farmacy")
         : replaceString(expense.title, replacements),
     amount: Math.round(expense.amount * (1.08 + ((index % 3) * 0.05))),
   }));
@@ -523,7 +523,7 @@ function computeSummaryFromState(state: Pick<PlatformState, "orders" | "expenses
 }
 
 export function createPlatformStateStore(): Record<Platform, PlatformState> {
-  const harbs: PlatformState = {
+  const naturale: PlatformState = {
     products: clone(MOCK_PRODUCTS),
     customers: clone(MOCK_CUSTOMERS),
     orders: clone(MOCK_ORDERS),
@@ -578,7 +578,7 @@ export function createPlatformStateStore(): Record<Platform, PlatformState> {
     rewardActivity: holisticRewardActivity,
   };
 
-  return { harbs, holistic };
+  return { naturale, holistic };
 }
 
 export function getPlatformSummary(state: Pick<PlatformState, "orders" | "expenses">) {

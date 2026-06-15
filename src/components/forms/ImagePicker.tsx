@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { uploadFile } from "@/lib/uploads";
 
 interface ImagePickerProps {
   label: string;
@@ -16,16 +17,7 @@ interface ImagePickerProps {
   className?: string;
 }
 
-const MAX_FILE_MB = 2;
-
-function readFileAsDataUrl(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(String(reader.result ?? ""));
-    reader.onerror = () => reject(reader.error);
-    reader.readAsDataURL(file);
-  });
-}
+const MAX_FILE_MB = 10;
 
 export function ImagePicker({
   label,
@@ -56,7 +48,14 @@ export function ImagePicker({
           toast.error(`${f.name} is over ${MAX_FILE_MB}MB.`);
           continue;
         }
-        next.push(await readFileAsDataUrl(f));
+        try {
+          const uploaded = await uploadFile(f, "PRODUCT_IMAGE");
+          next.push(uploaded.url);
+        } catch (error) {
+          toast.error(`Could not upload ${f.name}.`, {
+            description: error instanceof Error ? error.message : undefined,
+          });
+        }
       }
       if (next.length) onChange([...value, ...next]);
     } finally {
@@ -74,7 +73,7 @@ export function ImagePicker({
     }
     try {
       const parsed = new URL(trimmed);
-      if (!["http:", "https:", "data:"].includes(parsed.protocol)) throw new Error("bad protocol");
+      if (!["http:", "https:"].includes(parsed.protocol)) throw new Error("bad protocol");
     } catch {
       toast.error("Use a valid http(s) URL.");
       return;

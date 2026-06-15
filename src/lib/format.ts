@@ -1,6 +1,17 @@
-export function formatNaira(value: number) {
-  if (value == null || Number.isNaN(value)) return "₦0";
-  return `₦${value.toLocaleString("en-NG", { maximumFractionDigits: 0 })}`;
+// Money is stored/transferred in integer kobo throughout the app; format to naira.
+export function formatNaira(kobo: number) {
+  if (kobo == null || Number.isNaN(kobo)) return "₦0";
+  return `₦${Math.round(kobo / 100).toLocaleString("en-NG", { maximumFractionDigits: 0 })}`;
+}
+
+/** Convert kobo → naira (for number inputs that edit money). */
+export function koboToNaira(kobo: number) {
+  return Math.round((kobo ?? 0) / 100);
+}
+
+/** Convert a naira amount → integer kobo (for sending to the backend). */
+export function nairaToKobo(naira: number) {
+  return Math.round((naira ?? 0) * 100);
 }
 
 export function formatNairaSigned(value: number) {

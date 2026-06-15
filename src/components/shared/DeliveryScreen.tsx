@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Truck } from "lucide-react";
 import { FilterBar } from "@/components/ui/filter-bar";
@@ -8,6 +8,8 @@ import { MoneyDisplay } from "@/components/ui/money";
 import { Badge } from "@/components/ui/badge";
 import { DeliveryStatusBadge, CollectionStatusBadge } from "@/components/delivery/status-badge";
 import { useDeliveries } from "@/features/delivery/useDeliveries";
+import { PaginationFooter } from "@/components/ui/pagination-footer";
+import { DEFAULT_PAGE_SIZE } from "@/lib/pagination";
 import {
   Select,
   SelectContent,
@@ -33,15 +35,22 @@ export function DeliveryScreen({
 }) {
   const [q, setQ] = useState("");
   const [status, setStatus] = useState("all");
+  const [page, setPage] = useState(1);
   const { data, isLoading } = useDeliveries({
     assigneeId,
     status: status === "all" ? undefined : status,
+    page,
+    limit: DEFAULT_PAGE_SIZE,
   });
 
+  useEffect(() => {
+    setPage(1);
+  }, [q, status, assigneeId]);
+
   const filtered = useMemo(() => {
-    if (!data) return undefined;
+    if (!data?.items) return undefined;
     const search = q.toLowerCase();
-    return data.filter((d) =>
+    return data.items.filter((d) =>
       !search || `${d.orderNumber} ${d.customerName} ${d.city}`.toLowerCase().includes(search),
     );
   }, [data, q]);
@@ -145,6 +154,7 @@ export function DeliveryScreen({
           </div>
         }
       />
+      <PaginationFooter meta={data?.meta} page={page} loading={isLoading} itemLabel="deliveries" onPageChange={setPage} />
     </div>
   );
 }

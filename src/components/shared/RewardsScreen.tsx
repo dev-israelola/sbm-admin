@@ -6,19 +6,26 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useRewards } from "@/features/rewards/useRewards";
+import { PaginationFooter } from "@/components/ui/pagination-footer";
+import { DEFAULT_PAGE_SIZE } from "@/lib/pagination";
 import { RewardAdjustDialog } from "@/components/rewards/RewardAdjustDialog";
 import { formatRelative } from "@/lib/format";
 import type { CustomerRewardsSummary } from "@/types/rewards";
 
 export function RewardsScreen() {
-  const { data, isLoading } = useRewards();
   const [q, setQ] = useState("");
+  const [page, setPage] = useState(1);
+  const { data, isLoading } = useRewards({ page, limit: DEFAULT_PAGE_SIZE });
   const [adjustFor, setAdjustFor] = useState<CustomerRewardsSummary | null>(null);
+  const handleSearchChange = (value: string) => {
+    setQ(value);
+    setPage(1);
+  };
 
   const filtered = useMemo(() => {
-    if (!data) return undefined;
+    if (!data?.items) return undefined;
     const s = q.toLowerCase();
-    return data.filter((r) => !s || `${r.customerName} ${r.customerEmail}`.toLowerCase().includes(s));
+    return data.items.filter((r) => !s || `${r.customerName} ${r.customerEmail}`.toLowerCase().includes(s));
   }, [data, q]);
 
   const columns: DataTableColumn<CustomerRewardsSummary>[] = [
@@ -50,7 +57,7 @@ export function RewardsScreen() {
   return (
     <div>
       <PageHeader eyebrow="Loyalty" title="Customer rewards" description="Manage point balances and audit adjustments." />
-      <FilterBar searchValue={q} onSearchChange={setQ} searchPlaceholder="Search customer or email…" className="mb-4" />
+      <FilterBar searchValue={q} onSearchChange={handleSearchChange} searchPlaceholder="Search customer or email…" className="mb-4" />
       <DataTable
         rows={filtered}
         columns={columns}
@@ -64,6 +71,7 @@ export function RewardsScreen() {
           </div>
         }
       />
+      <PaginationFooter meta={data?.meta} page={page} loading={isLoading} itemLabel="reward wallets" onPageChange={setPage} />
 
       {adjustFor && (
         <RewardAdjustDialog

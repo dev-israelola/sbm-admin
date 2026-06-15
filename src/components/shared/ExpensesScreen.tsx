@@ -7,6 +7,8 @@ import { MoneyDisplay } from "@/components/ui/money";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useExpenses } from "@/features/accounting/useAccounting";
+import { PaginationFooter } from "@/components/ui/pagination-footer";
+import { DEFAULT_PAGE_SIZE } from "@/lib/pagination";
 import { ExpenseDialog } from "@/components/accounting/ExpenseDialog";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
@@ -15,17 +17,21 @@ import { EXPENSE_CATEGORY_LABEL, type Expense } from "@/types/accounting";
 import { formatDate } from "@/lib/format";
 
 export function ExpensesScreen() {
-  const { data, isLoading } = useExpenses();
   const [q, setQ] = useState("");
   const [category, setCategory] = useState("all");
+  const [page, setPage] = useState(1);
+  const { data, isLoading } = useExpenses({
+    category: category === "all" ? undefined : category,
+    page,
+    limit: DEFAULT_PAGE_SIZE,
+  });
   const [open, setOpen] = useState(false);
 
   const filtered = useMemo(() => {
-    if (!data) return undefined;
+    if (!data?.items) return undefined;
     const s = q.toLowerCase();
-    return data.filter((e) => {
+    return data.items.filter((e) => {
       if (s && !`${e.title} ${e.vendor ?? ""}`.toLowerCase().includes(s)) return false;
-      if (category !== "all" && e.category !== category) return false;
       return true;
     });
   }, [data, q, category]);
@@ -56,8 +62,8 @@ export function ExpensesScreen() {
           </Button>
         }
       />
-      <FilterBar searchValue={q} onSearchChange={setQ} searchPlaceholder="Search expense or vendor…" className="mb-4">
-        <Select value={category} onValueChange={setCategory}>
+      <FilterBar searchValue={q} onSearchChange={(value) => { setQ(value); setPage(1); }} searchPlaceholder="Search expense or vendor…" className="mb-4">
+        <Select value={category} onValueChange={(value) => { setCategory(value); setPage(1); }}>
           <SelectTrigger className="w-44 h-9 text-[12px]"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All categories</SelectItem>
@@ -80,6 +86,7 @@ export function ExpensesScreen() {
           </div>
         }
       />
+      <PaginationFooter meta={data?.meta} page={page} loading={isLoading} itemLabel="expenses" onPageChange={setPage} />
 
       <ExpenseDialog open={open} onOpenChange={setOpen} />
     </div>

@@ -9,9 +9,7 @@ import { queryClient } from "@/lib/query-client";
 import "@/index.css";
 
 async function bootstrap() {
-  // Demo build has no real backend, so the MSW mock API runs in production too.
-  // Set VITE_ENABLE_MOCK_API=false (e.g. when wiring a real backend) to disable.
-  const shouldUseMockApi = import.meta.env.VITE_ENABLE_MOCK_API !== "false";
+  const shouldUseMockApi = import.meta.env.VITE_ENABLE_MOCK_API === "true";
 
   if (shouldUseMockApi) {
     try {
@@ -23,6 +21,13 @@ async function bootstrap() {
     } catch (error) {
       console.error("Mock API failed to start.", error);
     }
+  } else if ("serviceWorker" in navigator) {
+    const registrations = await navigator.serviceWorker.getRegistrations();
+    await Promise.all(
+      registrations
+        .filter((registration) => registration.active?.scriptURL.includes("mockServiceWorker"))
+        .map((registration) => registration.unregister()),
+    );
   }
 
   ReactDOM.createRoot(document.getElementById("root")!).render(

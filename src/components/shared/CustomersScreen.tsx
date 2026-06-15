@@ -1,24 +1,19 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Users } from "lucide-react";
 import { FilterBar } from "@/components/ui/filter-bar";
 import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { MoneyDisplay } from "@/components/ui/money";
 import { useCustomers } from "@/features/auth/useAuth";
+import { PaginationFooter } from "@/components/ui/pagination-footer";
+import { DEFAULT_PAGE_SIZE } from "@/lib/pagination";
 import { formatDate } from "@/lib/format";
 import type { Customer } from "@/types/user";
 
 export function CustomersScreen() {
-  const { data, isLoading } = useCustomers();
   const [q, setQ] = useState("");
-
-  const filtered = useMemo(() => {
-    if (!data) return undefined;
-    const search = q.toLowerCase();
-    return data.filter((c) =>
-      !search || `${c.fullName} ${c.email}`.toLowerCase().includes(search),
-    );
-  }, [data, q]);
+  const [page, setPage] = useState(1);
+  const { data, isLoading } = useCustomers({ q, page, limit: DEFAULT_PAGE_SIZE });
 
   const columns: DataTableColumn<Customer>[] = [
     {
@@ -41,9 +36,17 @@ export function CustomersScreen() {
   return (
     <div>
       <PageHeader eyebrow="Catalog" title="Customers" description="Customer accounts and lifetime activity." />
-      <FilterBar searchValue={q} onSearchChange={setQ} searchPlaceholder="Search name or email…" className="mb-4" />
+      <FilterBar
+        searchValue={q}
+        onSearchChange={(value) => {
+          setQ(value);
+          setPage(1);
+        }}
+        searchPlaceholder="Search name or email…"
+        className="mb-4"
+      />
       <DataTable
-        rows={filtered}
+        rows={data?.items}
         columns={columns}
         loading={isLoading}
         rowKey={(c) => c.id}
@@ -54,6 +57,7 @@ export function CustomersScreen() {
           </div>
         }
       />
+      <PaginationFooter meta={data?.meta} page={page} loading={isLoading} itemLabel="customers" onPageChange={setPage} />
     </div>
   );
 }

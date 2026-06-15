@@ -23,10 +23,12 @@ import { ReconciliationScreen } from "@/components/shared/ReconciliationScreen";
 import { ProfitLossScreen } from "@/components/shared/ProfitLossScreen";
 import { ReportsScreen } from "@/components/shared/ReportsScreen";
 import { SettingsScreen } from "@/components/shared/SettingsScreen";
+import { StaffScreen } from "@/components/shared/StaffScreen";
 
 const PATH = "/admin";
 
 export function AdminOverviewPage() { return <AdminOverview />; }
+export function AdminTeamPage() { return <StaffScreen />; }
 export function AdminOrdersPage() { return <OrdersScreen rolePath={PATH} />; }
 export function AdminOrderDetailPage() { return <OrderDetailScreen rolePath={PATH} />; }
 export function AdminRefundsPage() { return <RefundsScreen rolePath={PATH} />; }

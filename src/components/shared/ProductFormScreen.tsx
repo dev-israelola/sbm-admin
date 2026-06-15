@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -13,15 +13,30 @@ import { FormTextarea } from "@/components/forms/FormTextarea";
 import { FormSelect } from "@/components/forms/FormSelect";
 import { FormSwitch } from "@/components/forms/FormSwitch";
 import { ImagePicker } from "@/components/forms/ImagePicker";
-import { useCreateProduct, useProduct, useUpdateProduct } from "@/features/products/useProducts";
-import { PRODUCT_CATEGORIES_BY_PLATFORM, PRODUCT_CATEGORY_LABEL } from "@/types/product";
+import { useCategories, useCreateProduct, useProduct, useUpdateProduct } from "@/features/products/useProducts";
 import { useAuthStore } from "@/store/auth-store";
 import { PLATFORM_CONFIG } from "@/types/platform";
+import { slugify, suggestSku } from "@/lib/slug";
+import { koboToNaira, nairaToKobo } from "@/lib/format";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+
+// Mirror the backend DTO limits so we can trim instead of erroring.
+const SEO_TITLE_MAX = 200;
+const SEO_DESC_MAX = 320;
 
 const schema = z.object({
   name: z.string().min(2),
-  slug: z.string().min(2),
-  sku: z.string().min(2),
+  // Auto-derived from the name; editable. Backend de-duplicates on save.
+  slug: z.string().optional(),
+  // Auto-suggested from the name; editable and optional.
+  sku: z.string().optional(),
   brand: z.string().min(2),
   category: z.string().min(2),
   description: z.string().min(20),
@@ -54,28 +69,82 @@ export function ProductFormScreen({ rolePath, mode }: Props) {
   const { id } = useParams();
   const navigate = useNavigate();
   const existing = useProduct(mode === "edit" ? id : undefined);
+  const categories = useCategories();
   const create = useCreateProduct();
   const update = useUpdateProduct();
-  const categoryOptions = PRODUCT_CATEGORIES_BY_PLATFORM[activePlatform];
-  const defaultCategory = categoryOptions[0];
   const defaultBrand = platform.defaultBrand;
+
+  const emptyValues: Values = {
+    name: "",
+    slug: "",
+    sku: "",
+    brand: defaultBrand,
+    category: "",
+    description: "",
+    shortDescription: "",
+    benefits: "",
+    ingredients: "",
+    howToUse: "",
+    retailPrice: 0,
+    costPrice: 0,
+    availableStock: 0,
+    lowStockThreshold: 5,
+    status: "draft",
+    isFeatured: false,
+    isBestSeller: false,
+    isNewArrival: false,
+    seoTitle: "",
+    seoDescription: "",
+    images: [],
+  };
 
   const form = useForm<Values>({
     resolver: zodResolver(schema),
-    defaultValues: {
-      status: "draft",
-      isFeatured: false,
-      isBestSeller: false,
-      isNewArrival: false,
-      retailPrice: 0,
-      costPrice: 0,
-      availableStock: 0,
-      lowStockThreshold: 5,
-      category: defaultCategory,
-      brand: defaultBrand,
-      images: [],
-    } as Partial<Values> as Values,
+    defaultValues: emptyValues,
   });
+
+  // Track manual edits so auto-fill stops overriding the user's own values.
+  const slugTouched = useRef(false);
+  const skuTouched = useRef(false);
+  const seoTitleTouched = useRef(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const name = form.watch("name");
+  const seoDescription = form.watch("seoDescription") ?? "";
+
+  useEffect(() => {
+    if (mode === "new" && categories.data?.[0] && !form.getValues("category")) {
+      form.setValue("category", categories.data[0].id);
+    }
+  }, [categories.data, form, mode]);
+
+  // Auto-derive slug + suggest a SKU from the product name (new products only).
+  useEffect(() => {
+    if (mode !== "new") return;
+    if (!slugTouched.current) {
+      form.setValue("slug", slugify(name ?? ""), { shouldValidate: true });
+    }
+    // Fill the SKU once when a name first appears and the field is still empty,
+    // so the readable random suffix doesn't churn on every keystroke.
+    if (!skuTouched.current && !form.getValues("sku") && (name ?? "").trim().length >= 2) {
+      form.setValue("sku", suggestSku(name));
+    }
+    // SEO title mirrors the product name unless the user edits it.
+    if (!seoTitleTouched.current) {
+      form.setValue("seoTitle", (name ?? "").slice(0, SEO_TITLE_MAX));
+    }
+  }, [name, mode, form]);
+
+  function regenerateSku() {
+    skuTouched.current = false;
+    form.setValue("sku", suggestSku(form.getValues("name") ?? ""), { shouldValidate: true });
+  }
+
+  function resetForm() {
+    slugTouched.current = false;
+    skuTouched.current = false;
+    seoTitleTouched.current = false;
+    form.reset(emptyValues);
+  }
 
   useEffect(() => {
     if (existing.data) {
@@ -85,14 +154,14 @@ export function ProductFormScreen({ rolePath, mode }: Props) {
         slug: p.slug,
         sku: p.sku,
         brand: p.brand,
-        category: p.category,
+        category: p.categoryId ?? "",
         description: p.description,
         shortDescription: p.shortDescription,
         benefits: p.benefits.join("\n"),
         ingredients: p.ingredients.join("\n"),
         howToUse: p.howToUse.join("\n"),
-        retailPrice: p.retailPrice,
-        costPrice: p.costPrice,
+        retailPrice: koboToNaira(p.retailPrice),
+        costPrice: koboToNaira(p.costPrice),
         availableStock: p.availableStock,
         lowStockThreshold: p.lowStockThreshold,
         status: p.status,
@@ -110,35 +179,37 @@ export function ProductFormScreen({ rolePath, mode }: Props) {
   if (mode === "edit" && !existing.data) return <p className="text-sm text-ink-muted">Product not found.</p>;
 
   async function submit(v: Values) {
+    const statusByApi = { draft: "DRAFT", active: "ACTIVE", archived: "ARCHIVED" } as const;
     const payload = {
       name: v.name,
       slug: v.slug,
       sku: v.sku,
       brand: v.brand,
-      category: v.category as any,
+      categoryId: v.category,
       description: v.description,
       shortDescription: v.shortDescription,
       benefits: v.benefits.split("\n").map((s) => s.trim()).filter(Boolean),
       ingredients: v.ingredients.split("\n").map((s) => s.trim()).filter(Boolean),
       howToUse: v.howToUse.split("\n").map((s) => s.trim()).filter(Boolean),
       images: v.images,
-      retailPrice: v.retailPrice,
-      costPrice: v.costPrice,
+      retailPrice: nairaToKobo(v.retailPrice),
+      costPrice: nairaToKobo(v.costPrice),
       availableStock: v.availableStock,
       lowStockThreshold: v.lowStockThreshold,
-      status: v.status,
+      status: statusByApi[v.status],
       isFeatured: v.isFeatured,
       isBestSeller: v.isBestSeller,
       isNewArrival: v.isNewArrival,
-      seoTitle: v.seoTitle,
-      seoDescription: v.seoDescription,
-      tags: [],
+      // Trim to the backend limits so over-length copy never blocks the save.
+      seoTitle: v.seoTitle?.slice(0, SEO_TITLE_MAX),
+      seoDescription: v.seoDescription?.slice(0, SEO_DESC_MAX),
     };
 
     if (mode === "new") {
-      const product = await create.mutateAsync(payload);
+      await create.mutateAsync(payload);
       toast.success("Product created.");
-      navigate(`${rolePath}/products/${product.id}/edit`);
+      resetForm();
+      setShowSuccess(true);
     } else {
       await update.mutateAsync({ id: id!, ...payload });
       toast.success("Product updated.");
@@ -162,8 +233,27 @@ export function ProductFormScreen({ rolePath, mode }: Props) {
           <h2 className="font-display text-base">Basics</h2>
           <div className="grid sm:grid-cols-2 gap-3">
             <FormInput label="Product name" {...form.register("name")} error={form.formState.errors.name?.message} />
-            <FormInput label="Slug" {...form.register("slug")} error={form.formState.errors.slug?.message} />
-            <FormInput label="SKU" {...form.register("sku")} error={form.formState.errors.sku?.message} />
+            <FormInput
+              label="Slug"
+              hint="Auto-generated from the name. Edit to override."
+              {...form.register("slug", { onChange: () => { slugTouched.current = true; } })}
+              error={form.formState.errors.slug?.message}
+            />
+            <div className="flex flex-col gap-1.5">
+              <FormInput
+                label="SKU"
+                hint="Auto-suggested from the name. Edit to override."
+                {...form.register("sku", { onChange: () => { skuTouched.current = true; } })}
+                error={form.formState.errors.sku?.message}
+              />
+              <button
+                type="button"
+                onClick={regenerateSku}
+                className="self-start text-[11px] text-accent hover:underline"
+              >
+                Regenerate SKU
+              </button>
+            </div>
             <FormInput label="Brand" {...form.register("brand")} error={form.formState.errors.brand?.message} />
             <Controller
               control={form.control}
@@ -173,7 +263,8 @@ export function ProductFormScreen({ rolePath, mode }: Props) {
                   label="Category"
                   value={field.value}
                   onChange={field.onChange}
-                  options={categoryOptions.map((value) => ({ value, label: PRODUCT_CATEGORY_LABEL[value] }))}
+                  options={(categories.data ?? []).map((category) => ({ value: category.id, label: category.name }))}
+                  placeholder={categories.isLoading ? "Loading categories..." : "Select category"}
                 />
               )}
             />
@@ -279,8 +370,18 @@ export function ProductFormScreen({ rolePath, mode }: Props) {
 
         <section className="card p-5 space-y-3">
           <h2 className="font-display text-base">SEO</h2>
-          <FormInput label="SEO title" {...form.register("seoTitle")} />
-          <FormTextarea label="SEO description" {...form.register("seoDescription")} />
+          <FormInput
+            label="SEO title"
+            hint="Auto-filled from the product name. Edit to override."
+            maxLength={SEO_TITLE_MAX}
+            {...form.register("seoTitle", { onChange: () => { seoTitleTouched.current = true; } })}
+          />
+          <FormTextarea
+            label="SEO description"
+            hint={`${seoDescription.length}/${SEO_DESC_MAX} characters`}
+            maxLength={SEO_DESC_MAX}
+            {...form.register("seoDescription")}
+          />
         </section>
 
         <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
@@ -292,6 +393,32 @@ export function ProductFormScreen({ rolePath, mode }: Props) {
           </Button>
         </div>
       </form>
+
+      <Dialog open={showSuccess} onOpenChange={setShowSuccess}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Product created</DialogTitle>
+            <DialogDescription>
+              The product was added to the catalog. What would you like to do next?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setShowSuccess(false);
+                navigate(`${rolePath}/inventory`);
+              }}
+            >
+              Go to inventory
+            </Button>
+            <Button type="button" onClick={() => setShowSuccess(false)}>
+              Add another product
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

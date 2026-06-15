@@ -1,14 +1,19 @@
+import { useState } from "react";
 import { Receipt } from "lucide-react";
 import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Badge } from "@/components/ui/badge";
 import { MoneyDisplay } from "@/components/ui/money";
+import { ReportExportControls } from "@/components/reports/ReportExportControls";
 import { useSales } from "@/features/accounting/useAccounting";
+import { PaginationFooter } from "@/components/ui/pagination-footer";
+import { DEFAULT_PAGE_SIZE } from "@/lib/pagination";
 import { formatDate } from "@/lib/format";
 import type { SalesRecord } from "@/types/accounting";
 
 export function SalesRecordsScreen() {
-  const { data, isLoading } = useSales();
+  const [page, setPage] = useState(1);
+  const { data, isLoading } = useSales({ page, limit: DEFAULT_PAGE_SIZE });
 
   const columns: DataTableColumn<SalesRecord>[] = [
     { key: "no", header: "Order", render: (r) => <span className="text-[13px] font-medium text-ink">{r.orderNumber}</span> },
@@ -35,9 +40,14 @@ export function SalesRecordsScreen() {
 
   return (
     <div>
-      <PageHeader eyebrow="Accounting" title="Sales records" description="Every order that has cleared the basic stages." />
+      <PageHeader
+        eyebrow="Accounting"
+        title="Sales records"
+        description="Every order that has cleared the basic stages."
+        actions={<ReportExportControls reportId="sales" title="Sales report" />}
+      />
       <DataTable
-        rows={data}
+        rows={data?.items}
         columns={columns}
         loading={isLoading}
         rowKey={(r) => r.id}
@@ -49,6 +59,7 @@ export function SalesRecordsScreen() {
           </div>
         }
       />
+      <PaginationFooter meta={data?.meta} page={page} loading={isLoading} itemLabel="sales" onPageChange={setPage} />
     </div>
   );
 }

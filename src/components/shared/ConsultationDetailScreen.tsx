@@ -13,8 +13,8 @@ import { Label } from "@/components/ui/label";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
+import { useStaff } from "@/features/auth/useAuth";
 import { useAuthStore } from "@/store/auth-store";
-import { STAFF_BY_ROLE } from "@/data/mock-users";
 import { formatDate, formatDateTime } from "@/lib/format";
 import type { RoutineBlock } from "@/types/consultation";
 
@@ -24,6 +24,9 @@ export function ConsultationDetailScreen({ rolePath }: { rolePath: string }) {
   const rec = useRecommendation(c?.recommendationId);
   const products = useProducts();
   const user = useAuthStore((s) => s.user);
+  const canAssignConsultant = user?.role === "admin" || user?.role === "manager";
+  const staff = useStaff(canAssignConsultant);
+  const consultants = (staff.data?.items ?? []).filter((u) => u.role === "consultant" && u.active);
   const create = useCreateRecommendation();
   const assign = useAssignConsultant();
 
@@ -79,7 +82,7 @@ export function ConsultationDetailScreen({ rolePath }: { rolePath: string }) {
   }
 
   async function pickConsultant(id: string) {
-    const consultant = STAFF_BY_ROLE.consultant.find((u) => u.id === id);
+    const consultant = consultants.find((u) => u.id === id);
     if (!consultant || !c) return;
     await assign.mutateAsync({ id: c.id, consultantId: id, consultantName: consultant.fullName });
     toast.success(`${consultant.fullName} assigned.`);
@@ -230,14 +233,16 @@ export function ConsultationDetailScreen({ rolePath }: { rolePath: string }) {
           <section className="card p-5 space-y-3">
             <h2 className="eyebrow">Consultant</h2>
             <p className="text-[13px] text-ink">{c.consultantName ?? "Unassigned"}</p>
-            <Select value={c.consultantId ?? ""} onValueChange={pickConsultant}>
-              <SelectTrigger className="h-9 text-[12px]"><SelectValue placeholder="Assign consultant" /></SelectTrigger>
-              <SelectContent>
-                {STAFF_BY_ROLE.consultant.map((u) => (
-                  <SelectItem key={u.id} value={u.id}>{u.fullName}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {canAssignConsultant && (
+              <Select value={c.consultantId ?? ""} onValueChange={pickConsultant}>
+                <SelectTrigger className="h-9 text-[12px]"><SelectValue placeholder={staff.isLoading ? "Loading consultants" : "Assign consultant"} /></SelectTrigger>
+                <SelectContent>
+                  {consultants.map((u) => (
+                    <SelectItem key={u.id} value={u.id}>{u.fullName}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
           </section>
         </aside>
       </div>

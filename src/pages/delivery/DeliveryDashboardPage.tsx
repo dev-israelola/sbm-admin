@@ -14,20 +14,20 @@ import { formatDate, formatNaira } from "@/lib/format";
 export default function DeliveryDashboardPage() {
   const user = useAuthStore((s) => s.user);
   const { data } = useDeliveries({ assigneeId: user?.id });
+  const deliveries = data?.items ?? [];
 
   const today = useMemo(() => {
-    if (!data) return [];
     const todayDate = new Date().toISOString().slice(0, 10);
-    return data.filter((d) => d.scheduledFor.slice(0, 10) === todayDate);
-  }, [data]);
+    return deliveries.filter((d) => d.scheduledFor.slice(0, 10) === todayDate);
+  }, [deliveries]);
 
   const cashExpected = useMemo(
     () => today.filter((d) => d.paymentMethod === "pod").reduce((acc, d) => acc + d.amountToCollect, 0),
     [today],
   );
 
-  const inProgress = data?.filter((d) => ["assigned", "picked-up", "in-transit"].includes(d.status)).length ?? 0;
-  const completed = data?.filter((d) => d.status === "delivered").length ?? 0;
+  const inProgress = deliveries.filter((d) => ["assigned", "picked-up", "in-transit"].includes(d.status)).length;
+  const completed = deliveries.filter((d) => d.status === "delivered").length;
 
   return (
     <div>
@@ -55,11 +55,11 @@ export default function DeliveryDashboardPage() {
             </Button>
           }
         >
-          {(!data || data.length === 0) ? (
+          {deliveries.length === 0 ? (
             <p className="px-5 py-8 text-sm text-ink-muted">No assignments yet. Check back later.</p>
           ) : (
             <ul className="divide-y divide-line/60">
-              {data.slice(0, 10).map((d) => (
+              {deliveries.slice(0, 10).map((d) => (
                 <li key={d.id}>
                   <Link to={`/delivery/assignments/${d.id}`} className="flex items-center gap-4 px-5 py-3 hover:bg-surface-muted/60 transition-colors">
                     <div className="flex-1 min-w-0">

@@ -67,6 +67,7 @@ export const NAV_BY_ROLE: Record<Role, NavSection[]> = {
       title: "System",
       items: [
         { to: "/admin/reports", label: "Reports", icon: FileText },
+        { to: "/admin/team", label: "Team", icon: Users },
         { to: "/admin/settings", label: "Settings", icon: Settings },
       ],
     },
@@ -84,6 +85,7 @@ export const NAV_BY_ROLE: Record<Role, NavSection[]> = {
         { to: "/manager/delivery", label: "Delivery", icon: Truck, badgeKey: "pendingPickup" },
         { to: "/manager/refunds", label: "Refunds", icon: RotateCcw, badgeKey: "pendingRefunds" },
         { to: "/manager/reports", label: "Reports", icon: FileText },
+        { to: "/manager/team", label: "Team", icon: Users },
       ],
     },
   ],

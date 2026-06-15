@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Package, Plus } from "lucide-react";
 import { FilterBar } from "@/components/ui/filter-bar";
@@ -7,14 +7,16 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { MoneyDisplay } from "@/components/ui/money";
-import { useProducts } from "@/features/products/useProducts";
+import { useCategories, useProducts } from "@/features/products/useProducts";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { PRODUCT_CATEGORIES_BY_PLATFORM, PRODUCT_CATEGORY_LABEL, type Product } from "@/types/product";
+import { PRODUCT_CATEGORY_LABEL, type Product } from "@/types/product";
 import { PLATFORM_CONFIG } from "@/types/platform";
 import { formatDate } from "@/lib/format";
 import { useAuthStore } from "@/store/auth-store";
+import { PaginationFooter } from "@/components/ui/pagination-footer";
+import { DEFAULT_PAGE_SIZE } from "@/lib/pagination";
 
 export function ProductsScreen({ rolePath }: { rolePath: string }) {
   const activePlatform = useAuthStore((s) => s.activePlatform);
@@ -22,12 +24,19 @@ export function ProductsScreen({ rolePath }: { rolePath: string }) {
   const [q, setQ] = useState("");
   const [category, setCategory] = useState("all");
   const [status, setStatus] = useState("all");
-  const categoryOptions = PRODUCT_CATEGORIES_BY_PLATFORM[activePlatform];
+  const [page, setPage] = useState(1);
+  const categories = useCategories();
   const { data, isLoading } = useProducts({
     q,
     category: category === "all" ? undefined : category,
     status: status === "all" ? undefined : status,
+    page,
+    limit: DEFAULT_PAGE_SIZE,
   });
+
+  useEffect(() => {
+    setPage(1);
+  }, [q, category, status]);
 
   const columns: DataTableColumn<Product>[] = useMemo(
     () => [
@@ -47,7 +56,7 @@ export function ProductsScreen({ rolePath }: { rolePath: string }) {
             <Link to={`${rolePath}/products/${p.id}/edit`} className="text-[13px] font-medium text-ink hover:text-accent">
               {p.name}
             </Link>
-            <p className="data-muted">{p.brand} · {PRODUCT_CATEGORY_LABEL[p.category]}</p>
+            <p className="data-muted">{p.brand} · {PRODUCT_CATEGORY_LABEL[p.category] ?? p.category}</p>
           </div>
         ),
       },
@@ -86,8 +95,8 @@ export function ProductsScreen({ rolePath }: { rolePath: string }) {
           <SelectTrigger className="w-44 h-9 text-[12px]"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All categories</SelectItem>
-            {categoryOptions.map((c) => (
-              <SelectItem key={c} value={c}>{PRODUCT_CATEGORY_LABEL[c]}</SelectItem>
+            {(categories.data ?? []).map((c) => (
+              <SelectItem key={c.id} value={c.slug}>{c.name}</SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -119,6 +128,7 @@ export function ProductsScreen({ rolePath }: { rolePath: string }) {
           </div>
         }
       />
+      <PaginationFooter meta={data?.meta} page={page} loading={isLoading} itemLabel="products" onPageChange={setPage} />
     </div>
   );
 }

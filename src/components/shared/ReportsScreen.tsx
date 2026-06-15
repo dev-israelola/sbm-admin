@@ -1,14 +1,23 @@
 import { useState } from "react";
-import { Download, FileSpreadsheet, FileText, Printer } from "lucide-react";
-import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { ReportExportControls } from "@/components/reports/ReportExportControls";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
+import {
+  presetToDates,
+  type DateRange,
+  type ReportData,
+  type ReportId,
+  type ReportRange,
+  useReport,
+} from "@/features/reports/useReports";
+import { formatNaira } from "@/lib/format";
 
-const REPORTS: { id: string; title: string; description: string; tag: string }[] = [
+const REPORTS: { id: ReportId; title: string; description: string; tag: string }[] = [
   { id: "sales", title: "Sales report", description: "Orders, gross, net, taxes and net per period.", tag: "Accounting" },
   { id: "inventory", title: "Inventory report", description: "Available, reserved, sold, returned, damaged per SKU.", tag: "Catalog" },
   { id: "orders", title: "Order report", description: "Full lifecycle status counts per period.", tag: "Operations" },
@@ -21,10 +30,106 @@ const REPORTS: { id: string; title: string; description: string; tag: string }[]
   { id: "low-stock", title: "Low-stock report", description: "All SKUs at or below their threshold.", tag: "Catalog" },
 ];
 
+function asRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
+}
+
+function asArray(value: unknown): Record<string, unknown>[] {
+  return Array.isArray(value) ? value.map(asRecord) : [];
+}
+
+function asNumber(value: unknown) {
+  return typeof value === "number" && Number.isFinite(value) ? value : 0;
+}
+
+function labelize(value: unknown) {
+  return String(value ?? "unknown").replace(/_/g, " ").toLowerCase();
+}
+
+function summarizeReport(id: ReportId, data?: ReportData) {
+  if (!data) return "Waiting for live data";
+  const totals = asRecord(data.totals);
+  const items = asArray(data.items);
+  const byStatus = asArray(data.byStatus);
+
+  if (id === "sales") {
+    return `${asNumber(totals.orders)} paid orders - ${formatNaira(asNumber(totals.gross))} gross`;
+  }
+  if (id === "refunds") {
+    return `${asNumber(totals.count)} refunds - ${formatNaira(asNumber(totals.amount))}`;
+  }
+  if (id === "orders") {
+    return `${asNumber(data.total)} orders across ${byStatus.length} statuses`;
+  }
+  if (id === "delivery") {
+    return byStatus.length ? byStatus.map((row) => `${labelize(row.status)}: ${asNumber(row.count)}`).join(", ") : "No delivery records in range";
+  }
+  if (id === "pickup") {
+    return `${asNumber(data.activeStationCount)} active pickup stations - ${asNumber(data.total)} handoffs`;
+  }
+  if (id === "customer") {
+    return `${items.length} top customers in selected range`;
+  }
+  if (id === "profit-loss") {
+    return `Net sales ${formatNaira(asNumber(data.netSales))} - profit ${formatNaira(asNumber(data.estimatedProfit))}`;
+  }
+  if (id === "cash-collection") {
+    const expected = byStatus.reduce((sum, row) => sum + asNumber(row.expected), 0);
+    const collected = byStatus.reduce((sum, row) => sum + asNumber(row.collected), 0);
+    return `${formatNaira(collected)} collected of ${formatNaira(expected)} expected`;
+  }
+  return `${asNumber(data.total) || items.length} rows available`;
+}
+
+function ReportCard({ report, range }: { report: (typeof REPORTS)[number]; range: DateRange }) {
+  const query = useReport(report.id, range);
+  const data = query.data;
+
+  return (
+    <article className="card p-5 flex flex-col gap-3">
+      <div>
+        <Badge variant="soft" className="mb-2">{report.tag}</Badge>
+        <h2 className="font-display text-base text-ink">{report.title}</h2>
+        <p className="text-[12px] text-ink-muted leading-relaxed mt-1">{report.description}</p>
+      </div>
+      <div className="rounded-xl bg-cream/60 border border-line/70 px-3 py-2 text-[11px] text-ink-muted min-h-12">
+        {query.isLoading ? (
+          <span className="inline-flex items-center gap-2"><Loader2 className="h-3.5 w-3.5 animate-spin" /> Loading live report...</span>
+        ) : query.error ? (
+          <span className="text-danger">{query.error.message}</span>
+        ) : (
+          <span>{summarizeReport(report.id, data)}</span>
+        )}
+      </div>
+      <div className="mt-auto">
+        <ReportExportControls
+          reportId={report.id}
+          title={report.title}
+          range={range}
+          disabled={query.isLoading || !!query.error}
+        />
+      </div>
+    </article>
+  );
+}
+
 export function ReportsScreen() {
-  const [range, setRange] = useState("30d");
-  function fakeExport(format: string, title: string) {
-    toast.success(`Generating ${format.toUpperCase()} for ${title}…`, { description: "Mocked — wire to backend later." });
+  const [range, setRange] = useState<ReportRange>("30d");
+  const [customFrom, setCustomFrom] = useState("");
+  const [customTo, setCustomTo] = useState("");
+
+  const usingCustom = !!customFrom && !!customTo;
+  // Custom dates win; "to" covers the whole selected day.
+  const effective: DateRange = usingCustom
+    ? { dateFrom: new Date(`${customFrom}T00:00:00`).toISOString(), dateTo: new Date(`${customTo}T23:59:59`).toISOString() }
+    : presetToDates(range);
+
+  const fromLabel = new Date(effective.dateFrom).toLocaleDateString("en-NG");
+  const toLabel = new Date(effective.dateTo).toLocaleDateString("en-NG");
+
+  function clearCustom() {
+    setCustomFrom("");
+    setCustomTo("");
   }
 
   return (
@@ -32,44 +137,54 @@ export function ReportsScreen() {
       <PageHeader
         eyebrow="Reports"
         title="Operational & financial reports"
-        description="Snapshot views — export to CSV or PDF for finance/ops review."
+        description={`Live backend reports from ${fromLabel} to ${toLabel}.`}
         actions={
-          <Select value={range} onValueChange={setRange}>
-            <SelectTrigger className="w-36 h-9 text-[12px]"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="today">Today</SelectItem>
-              <SelectItem value="7d">Last 7 days</SelectItem>
-              <SelectItem value="30d">Last 30 days</SelectItem>
-              <SelectItem value="90d">Last 90 days</SelectItem>
-              <SelectItem value="ytd">Year to date</SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="flex flex-wrap items-center gap-2">
+            <Select
+              value={usingCustom ? "custom" : range}
+              onValueChange={(value) => {
+                if (value === "custom") return;
+                clearCustom();
+                setRange(value as ReportRange);
+              }}
+            >
+              <SelectTrigger className="w-36 h-9 text-[12px]"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="today">Today</SelectItem>
+                <SelectItem value="7d">Last 7 days</SelectItem>
+                <SelectItem value="30d">Last 30 days</SelectItem>
+                <SelectItem value="90d">Last 90 days</SelectItem>
+                <SelectItem value="ytd">Year to date</SelectItem>
+                {usingCustom && <SelectItem value="custom">Custom range</SelectItem>}
+              </SelectContent>
+            </Select>
+            <input
+              type="date"
+              value={customFrom}
+              max={customTo || undefined}
+              onChange={(e) => setCustomFrom(e.target.value)}
+              className="h-9 rounded-md border border-line bg-surface px-2 text-[12px] text-ink"
+              aria-label="From date"
+            />
+            <span className="text-[12px] text-ink-muted">–</span>
+            <input
+              type="date"
+              value={customTo}
+              min={customFrom || undefined}
+              onChange={(e) => setCustomTo(e.target.value)}
+              className="h-9 rounded-md border border-line bg-surface px-2 text-[12px] text-ink"
+              aria-label="To date"
+            />
+            {usingCustom && (
+              <Button size="xs" variant="ghost" onClick={clearCustom}>Clear</Button>
+            )}
+          </div>
         }
       />
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {REPORTS.map((r) => (
-          <article key={r.id} className="card p-5 flex flex-col gap-3">
-            <div>
-              <Badge variant="soft" className="mb-2">{r.tag}</Badge>
-              <h2 className="font-display text-base text-ink">{r.title}</h2>
-              <p className="text-[12px] text-ink-muted leading-relaxed mt-1">{r.description}</p>
-            </div>
-            <div className="flex items-center gap-2 mt-auto">
-              <Button size="xs" variant="outline" onClick={() => fakeExport("csv", r.title)}>
-                <FileSpreadsheet className="h-3 w-3" /> CSV
-              </Button>
-              <Button size="xs" variant="outline" onClick={() => fakeExport("pdf", r.title)}>
-                <FileText className="h-3 w-3" /> PDF
-              </Button>
-              <Button size="xs" variant="ghost" onClick={() => fakeExport("print", r.title)}>
-                <Printer className="h-3 w-3" /> Print
-              </Button>
-              <Button size="xs" variant="ghost" className="ml-auto" onClick={() => fakeExport("download", r.title)}>
-                <Download className="h-3 w-3" /> View
-              </Button>
-            </div>
-          </article>
+          <ReportCard key={r.id} report={r} range={effective} />
         ))}
       </div>
     </div>

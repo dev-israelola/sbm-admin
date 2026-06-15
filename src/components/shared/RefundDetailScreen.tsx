@@ -19,7 +19,7 @@ export function RefundDetailScreen({ rolePath }: { rolePath: string }) {
   const { data: refund, isLoading } = useRefund(id);
   const user = useAuthStore((s) => s.user);
   const decide = useDecideRefund();
-  const [pending, setPending] = useState<"approve" | "reject" | "refund" | "partial" | null>(null);
+  const [pending, setPending] = useState<"review" | "approve" | "reject" | "refund" | null>(null);
 
   if (isLoading) return <Skeleton className="h-64 w-full" />;
   if (!refund) return <p className="text-sm text-ink-muted">Refund not found.</p>;
@@ -92,16 +92,16 @@ export function RefundDetailScreen({ rolePath }: { rolePath: string }) {
           >
             <section className="card p-5 space-y-2">
               <h2 className="eyebrow mb-2">Decision</h2>
+              <Button className="w-full" variant="outline" onClick={() => setPending("review")} disabled={refund.status !== "submitted"}>
+                Start review
+              </Button>
               <Button className="w-full" onClick={() => setPending("approve")} disabled={refund.status !== "submitted" && refund.status !== "under-review"}>
                 Approve refund
               </Button>
-              <Button className="w-full" variant="outline" onClick={() => setPending("partial")} disabled={refund.status === "refunded"}>
-                Partial refund
-              </Button>
-              <Button className="w-full" variant="success" onClick={() => setPending("refund")} disabled={refund.status === "refunded"}>
+              <Button className="w-full" variant="success" onClick={() => setPending("refund")} disabled={refund.status !== "approved"}>
                 Mark refunded
               </Button>
-              <Button className="w-full" variant="danger" onClick={() => setPending("reject")} disabled={refund.status === "rejected"}>
+              <Button className="w-full" variant="danger" onClick={() => setPending("reject")} disabled={refund.status !== "submitted" && refund.status !== "under-review"}>
                 Reject refund
               </Button>
               {refund.decisionNote && (
@@ -116,12 +116,13 @@ export function RefundDetailScreen({ rolePath }: { rolePath: string }) {
         open={!!pending}
         onOpenChange={(v) => !v && setPending(null)}
         title={
+          pending === "review" ? "Start refund review?" :
           pending === "approve" ? "Approve refund?" :
           pending === "reject" ? "Reject refund?" :
-          pending === "refund" ? "Mark as refunded?" :
-          "Issue partial refund?"
+          "Mark as refunded?"
         }
         description={
+          pending === "review" ? "Moves this request into review so the team knows it is being handled." :
           pending === "approve" ? "The customer will be notified the refund is approved." :
           pending === "reject" ? "The customer will be notified with the rejection reason." :
           pending === "refund" ? "Confirms the refund has been processed. Reward points will be reversed." :
@@ -130,10 +131,10 @@ export function RefundDetailScreen({ rolePath }: { rolePath: string }) {
         destructive={pending === "reject"}
         requireNote
         confirmLabel={
+          pending === "review" ? "Start review" :
           pending === "approve" ? "Approve" :
           pending === "reject" ? "Reject" :
-          pending === "refund" ? "Mark refunded" :
-          "Mark partial"
+          "Mark refunded"
         }
         onConfirm={(note) => commit(pending!, note ?? "")}
       />

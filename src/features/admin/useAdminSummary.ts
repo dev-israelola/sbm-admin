@@ -18,43 +18,18 @@ export interface AdminSummary {
   };
 }
 
-function zeroSummary(): AccountingSummary {
-  return {
-    grossSales: 0,
-    netSales: 0,
-    discounts: 0,
-    refunds: 0,
-    cogs: 0,
-    deliveryFeesCharged: 0,
-    deliveryFeesActual: 0,
-    packagingCosts: 0,
-    gatewayFees: 0,
-    expenses: 0,
-    estimatedProfit: 0,
-    cashCollected: 0,
-    unreconciledPod: 0,
-  };
-}
-
 export function useAdminSummary() {
   const activePlatform = useAuthStore((s) => s.activePlatform);
   const user = useAuthStore((s) => s.user);
   return useQuery({
     queryKey: qk.summary(activePlatform),
     queryFn: async () => {
+      // Let failures reject so React Query retries (e.g. on a cold-start 5xx)
+      // and the UI shows its loading state — never swallow into fake zeros,
+      // which would cache a misleading ₦0 as a "successful" result.
       const [summaryRes, countsRes] = await Promise.all([
-        api.get<Partial<AccountingSummary> & Record<string, unknown>>("/accounting/summary").catch(() => ({ data: zeroSummary() })),
-        api.get<AdminSummary["counts"]>("/admin/summary").catch(() => ({
-          data: {
-            pendingOrders: 0,
-            pendingVerification: 0,
-            podOrders: 0,
-            paystackOrders: 0,
-            lowStock: 0,
-            pendingRefunds: 0,
-            pendingPickup: 0,
-          },
-        })),
+        api.get<Partial<AccountingSummary> & Record<string, unknown>>("/accounting/summary"),
+        api.get<AdminSummary["counts"]>("/admin/summary"),
       ]);
 
       return {
@@ -62,6 +37,9 @@ export function useAdminSummary() {
         counts: countsRes.data,
       } satisfies AdminSummary;
     },
+    // Cold starts can take a few seconds; retry a bit more than the global
+    // default so a transient first-load failure recovers without a refresh.
+    retry: 3,
     enabled: user?.role === "admin" || user?.role === "manager",
   });
 }

@@ -9,19 +9,10 @@ import { queryClient } from "@/lib/query-client";
 import "@/index.css";
 
 async function bootstrap() {
-  const shouldUseMockApi = import.meta.env.VITE_ENABLE_MOCK_API === "true";
-
-  if (shouldUseMockApi) {
-    try {
-      const { worker } = await import("@/mocks/browser");
-      await worker.start({
-        onUnhandledRequest: "bypass",
-        serviceWorker: { url: "/mockServiceWorker.js" },
-      });
-    } catch (error) {
-      console.error("Mock API failed to start.", error);
-    }
-  } else if ("serviceWorker" in navigator) {
+  // Mock API removed — the app always talks to the real backend. Proactively
+  // unregister any stale mock service worker left in a browser from when the
+  // in-browser mock layer was enabled, so it can't keep intercepting requests.
+  if ("serviceWorker" in navigator) {
     const registrations = await navigator.serviceWorker.getRegistrations();
     await Promise.all(
       registrations

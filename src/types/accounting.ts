@@ -44,7 +44,7 @@ export interface SalesRecord {
   orderId: string;
   orderNumber: string;
   customerName: string;
-  paymentMethod: "paystack" | "pod";
+  paymentMethod: "paystack" | "pod" | "bank_transfer";
   paymentStatus: "pending" | "paid" | "refunded" | "partially-refunded";
   orderStatus: string;
   grossAmount: number;

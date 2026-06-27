@@ -27,8 +27,12 @@ const AdminDeliveryPage = lazy(() => adminMod().then((m) => ({ default: m.AdminD
 const AdminDeliveryDetailPage = lazy(() => adminMod().then((m) => ({ default: m.AdminDeliveryDetailPage })));
 const AdminConsultationsPage = lazy(() => adminMod().then((m) => ({ default: m.AdminConsultationsPage })));
 const AdminConsultationDetailPage = lazy(() => adminMod().then((m) => ({ default: m.AdminConsultationDetailPage })));
+const AdminConsultationSlotsPage = lazy(() => adminMod().then((m) => ({ default: m.AdminConsultationSlotsPage })));
+const AdminDeliveryTerminalsPage = lazy(() => adminMod().then((m) => ({ default: m.AdminDeliveryTerminalsPage })));
+const AdminBlogPage = lazy(() => adminMod().then((m) => ({ default: m.AdminBlogPage })));
 const AdminCustomersPage = lazy(() => adminMod().then((m) => ({ default: m.AdminCustomersPage })));
 const AdminRewardsPage = lazy(() => adminMod().then((m) => ({ default: m.AdminRewardsPage })));
+const AdminCouponsPage = lazy(() => adminMod().then((m) => ({ default: m.AdminCouponsPage })));
 const AdminAccountingOverviewPage = lazy(() => adminMod().then((m) => ({ default: m.AdminAccountingOverviewPage })));
 const AdminAccountingSalesPage = lazy(() => adminMod().then((m) => ({ default: m.AdminAccountingSalesPage })));
 const AdminAccountingExpensesPage = lazy(() => adminMod().then((m) => ({ default: m.AdminAccountingExpensesPage })));
@@ -103,9 +107,13 @@ export function AppRoutes() {
             <Route path="pickup-handoffs" element={<Navigate to="/admin/delivery?tab=handoffs" replace />} />
             <Route path="pickup-stations" element={<Navigate to="/admin/delivery?tab=stations" replace />} />
             <Route path="consultations" element={<AdminConsultationsPage />} />
+            <Route path="consultation-slots" element={<AdminConsultationSlotsPage />} />
+            <Route path="delivery-terminals" element={<AdminDeliveryTerminalsPage />} />
+            <Route path="blog" element={<AdminBlogPage />} />
             <Route path="consultations/:id" element={<AdminConsultationDetailPage />} />
             <Route path="customers" element={<AdminCustomersPage />} />
             <Route path="rewards" element={<AdminRewardsPage />} />
+            <Route path="coupons" element={<AdminCouponsPage />} />
             <Route path="accounting" element={<AdminAccountingOverviewPage />} />
             <Route path="accounting/sales" element={<AdminAccountingSalesPage />} />
             <Route path="accounting/expenses" element={<AdminAccountingExpensesPage />} />

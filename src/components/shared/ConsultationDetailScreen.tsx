@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ChevronLeft, Plus, Send, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { useConsultation, useCreateRecommendation, useAssignConsultant, useRecommendation } from "@/features/consultations/useConsultations";
+import { useConsultation, useCreateRecommendation, useAssignConsultant, useRecommendation, useConfirmConsultationPayment } from "@/features/consultations/useConsultations";
 import { useProducts } from "@/features/products/useProducts";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -29,6 +29,7 @@ export function ConsultationDetailScreen({ rolePath }: { rolePath: string }) {
   const consultants = (staff.data?.items ?? []).filter((u) => u.role === "consultant" && u.active);
   const create = useCreateRecommendation();
   const assign = useAssignConsultant();
+  const confirmPay = useConfirmConsultationPayment();
 
   const [title, setTitle] = useState("Personalised herbal protocol");
   const [note, setNote] = useState("");
@@ -115,6 +116,42 @@ export function ConsultationDetailScreen({ rolePath }: { rolePath: string }) {
             <p><span className="text-ink-muted">Goal:</span> {c.goal}</p>
             {c.notes && <p className="text-ink-muted italic">"{c.notes}"</p>}
           </section>
+
+          {(c.scheduledAt || c.fee) && (
+            <section className="card p-5 space-y-2 text-[13px]">
+              <h2 className="font-display text-base text-ink">Booking & payment</h2>
+              {c.scheduledAt && (
+                <p>
+                  <span className="text-ink-muted">Scheduled:</span>{" "}
+                  {new Date(c.scheduledAt).toLocaleString("en-NG", { timeZone: "Africa/Lagos" })}
+                </p>
+              )}
+              <p className="flex items-center gap-2">
+                <span className="text-ink-muted">Payment:</span>
+                <span>{(c.paymentMethod ?? "").replace("_", " ") || "—"}</span>
+                <Badge variant={c.paymentStatus === "paid" ? "success" : "warn"}>
+                  {c.paymentStatus || "pending"}
+                </Badge>
+              </p>
+              {c.paymentStatus !== "paid" && c.paymentMethod === "bank_transfer" && (
+                <Button
+                  size="sm"
+                  className="mt-1"
+                  disabled={confirmPay.isPending}
+                  onClick={async () => {
+                    try {
+                      await confirmPay.mutateAsync(c.id);
+                      toast.success("Payment confirmed — consultation scheduled");
+                    } catch (e) {
+                      toast.error(e instanceof Error ? e.message : "Could not confirm");
+                    }
+                  }}
+                >
+                  {confirmPay.isPending ? "Confirming…" : "Confirm transfer received"}
+                </Button>
+              )}
+            </section>
+          )}
 
           {rec.data ? (
             <section className="card p-5 space-y-3">

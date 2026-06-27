@@ -88,6 +88,21 @@ export function useVerifyPod() {
   });
 }
 
+export function useConfirmBankTransfer() {
+  const activePlatform = useAuthStore((s) => s.activePlatform);
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, reference, proofUrl }: { id: string; reference: string; proofUrl?: string }) => {
+      const { data } = await api.post<Record<string, any>>(`/admin/orders/${id}/confirm-transfer`, {
+        reference,
+        proofUrl,
+      });
+      return normalizeOrder(data);
+    },
+    onSuccess: (d) => invalidate(qc, activePlatform, d.id),
+  });
+}
+
 export function useUpdateOrderStatus() {
   const activePlatform = useAuthStore((s) => s.activePlatform);
   const qc = useQueryClient();

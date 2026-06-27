@@ -14,8 +14,12 @@ import { PickupHandoffsScreen } from "@/components/shared/PickupHandoffsScreen";
 import { PickupStationsScreen } from "@/components/shared/PickupStationsScreen";
 import { ConsultationsScreen } from "@/components/shared/ConsultationsScreen";
 import { ConsultationDetailScreen } from "@/components/shared/ConsultationDetailScreen";
+import { ConsultationBlocksScreen } from "@/components/shared/ConsultationBlocksScreen";
+import { DeliveryTerminalsScreen } from "@/components/shared/DeliveryTerminalsScreen";
+import { BlogScreen } from "@/components/shared/BlogScreen";
 import { CustomersScreen } from "@/components/shared/CustomersScreen";
 import { RewardsScreen } from "@/components/shared/RewardsScreen";
+import { CouponsScreen } from "@/components/shared/CouponsScreen";
 import { AccountingOverview } from "@/components/shared/AccountingOverview";
 import { SalesRecordsScreen } from "@/components/shared/SalesRecordsScreen";
 import { ExpensesScreen } from "@/components/shared/ExpensesScreen";
@@ -44,8 +48,12 @@ export function AdminPickupHandoffsPage() { return <PickupHandoffsScreen rolePat
 export function AdminPickupStationsPage() { return <PickupStationsScreen />; }
 export function AdminConsultationsPage() { return <ConsultationsScreen rolePath={PATH} />; }
 export function AdminConsultationDetailPage() { return <ConsultationDetailScreen rolePath={PATH} />; }
+export function AdminConsultationSlotsPage() { return <ConsultationBlocksScreen />; }
+export function AdminDeliveryTerminalsPage() { return <DeliveryTerminalsScreen />; }
+export function AdminBlogPage() { return <BlogScreen />; }
 export function AdminCustomersPage() { return <CustomersScreen />; }
 export function AdminRewardsPage() { return <RewardsScreen />; }
+export function AdminCouponsPage() { return <CouponsScreen />; }
 export function AdminAccountingOverviewPage() { return <AccountingOverview />; }
 export function AdminAccountingSalesPage() { return <SalesRecordsScreen />; }
 export function AdminAccountingExpensesPage() { return <ExpensesScreen />; }

@@ -15,7 +15,8 @@ import {
   Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
-import { useOrder, useUpdateOrderStatus, useAddOrderNote, useReconcileOrder } from "@/features/orders/useOrders";
+import { useOrder, useUpdateOrderStatus, useAddOrderNote, useReconcileOrder, useConfirmBankTransfer } from "@/features/orders/useOrders";
+import { paymentMethodLabel } from "@/lib/admin-normalizers";
 import { useAuthStore } from "@/store/auth-store";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -30,6 +31,8 @@ import { PodVerificationDialog } from "@/components/orders/PodVerificationDialog
 import { PodPaymentCollectionDialog } from "@/components/orders/PodPaymentCollectionDialog";
 import { DeliveryAssignDialog } from "@/components/delivery/DeliveryAssignDialog";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { FormInput } from "@/components/forms/FormInput";
 import { PermissionGate } from "@/components/layout/PermissionGate";
 import { can } from "@/lib/permissions";
 import { formatDate, formatDateTime, formatNaira } from "@/lib/format";
@@ -48,6 +51,7 @@ export function OrderDetailScreen({ rolePath }: Props) {
   const updateStatus = useUpdateOrderStatus();
   const addNote = useAddOrderNote();
   const reconcile = useReconcileOrder();
+  const confirmTransfer = useConfirmBankTransfer();
 
   const [verifyOpen, setVerifyOpen] = useState(false);
   const [assignOpen, setAssignOpen] = useState(false);
@@ -55,6 +59,8 @@ export function OrderDetailScreen({ rolePath }: Props) {
   const [cancelOpen, setCancelOpen] = useState(false);
   const [reconcileOpen, setReconcileOpen] = useState<"reconciled" | "discrepancy" | null>(null);
   const [noteDraft, setNoteDraft] = useState("");
+  const [transferOpen, setTransferOpen] = useState(false);
+  const [transferRef, setTransferRef] = useState("");
 
   if (isLoading) {
     return (
@@ -81,6 +87,7 @@ export function OrderDetailScreen({ rolePath }: Props) {
 
   const isPOD = order.paymentMethod === "pod";
   const isPaystack = order.paymentMethod === "paystack";
+  const isBankTransfer = order.paymentMethod === "bank_transfer";
 
   const isPickup = order.deliveryMethod === "pickup";
   const deliveryAssigned = Boolean(order.delivery?.assigneeId || order.delivery?.provider);
@@ -101,7 +108,7 @@ export function OrderDetailScreen({ rolePath }: Props) {
     { label: "Mark in transit", next: "in-transit", show: !isPickup && order.status === "ready-for-dispatch" },
     { label: "Mark delivered", next: "delivered", show: !isPickup && order.status === "in-transit" },
     // Completion (both paths)
-    { label: "Complete order", next: "completed", show: ["delivered", "picked-up"].includes(order.status) && isPaystack },
+    { label: "Complete order", next: "completed", show: ["delivered", "picked-up"].includes(order.status) && (isPaystack || isBankTransfer) },
   ];
 
   function transition(status: OrderStatus, label: string) {
@@ -145,7 +152,7 @@ export function OrderDetailScreen({ rolePath }: Props) {
           <OrderStatusBadge status={order.status} />
           <PaymentStatusBadge status={order.paymentStatus} />
           <Badge variant={order.paymentMethod === "paystack" ? "info" : "warn"}>
-            {order.paymentMethod === "paystack" ? "Paystack" : "Payment on delivery"}
+            {paymentMethodLabel(order.paymentMethod)}
           </Badge>
         </div>
       </header>
@@ -317,9 +324,15 @@ export function OrderDetailScreen({ rolePath }: Props) {
         <aside className="space-y-4 lg:sticky lg:top-20 lg:self-start">
           <section className="card p-5">
             <h2 className="eyebrow mb-2">Actions</h2>
-            <p className="text-[13px] text-ink mb-3">{ORDER_STATUS_COPY[order.status].title}</p>
+            <p className="text-[13px] text-ink mb-3">
+              {isBankTransfer && order.status === "pending-verification"
+                ? "Awaiting bank transfer"
+                : ORDER_STATUS_COPY[order.status].title}
+            </p>
             <p className="text-[12px] text-ink-muted leading-relaxed mb-4">
-              {ORDER_STATUS_COPY[order.status].body}
+              {isBankTransfer && order.status === "pending-verification"
+                ? "Customer chose bank transfer. Confirm the payment landed in the account, then the order moves to fulfilment."
+                : ORDER_STATUS_COPY[order.status].body}
             </p>
 
             <div className="space-y-2">
@@ -328,6 +341,14 @@ export function OrderDetailScreen({ rolePath }: Props) {
                   <ShieldCheck className="h-4 w-4" /> Verify customer
                 </Button>
               )}
+
+              {isBankTransfer &&
+                order.status === "pending-verification" &&
+                (can(role, "orders.verify") || can(role, "orders.update")) && (
+                  <Button className="w-full" size="md" onClick={() => setTransferOpen(true)}>
+                    <Banknote className="h-4 w-4" /> Confirm transfer received
+                  </Button>
+                )}
 
               {isPOD && ["delivered"].includes(order.status) && can(role, "orders.update") && !order.podCollection && (
                 <Button className="w-full" size="md" onClick={() => setCollectOpen(true)}>
@@ -426,6 +447,41 @@ export function OrderDetailScreen({ rolePath }: Props) {
           orderNumber={order.number}
         />
       )}
+      <Dialog open={transferOpen} onOpenChange={(v) => { setTransferOpen(v); if (!v) setTransferRef(""); }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Confirm bank transfer</DialogTitle>
+            <DialogDescription>
+              Enter the bank transfer reference / statement narration as evidence. This marks the order paid and verified.
+            </DialogDescription>
+          </DialogHeader>
+          <FormInput
+            label="Transfer reference"
+            placeholder="e.g. FT26061800123456"
+            value={transferRef}
+            onChange={(e) => setTransferRef(e.target.value)}
+          />
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setTransferOpen(false)}>Cancel</Button>
+            <Button
+              disabled={transferRef.trim().length < 2 || confirmTransfer.isPending}
+              onClick={async () => {
+                try {
+                  await confirmTransfer.mutateAsync({ id: order.id, reference: transferRef.trim() });
+                  toast.success("Bank transfer confirmed — order verified.");
+                  setTransferOpen(false);
+                  setTransferRef("");
+                } catch (e) {
+                  toast.error(e instanceof Error ? e.message : "Could not confirm transfer");
+                }
+              }}
+            >
+              Confirm
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <ConfirmDialog
         open={cancelOpen}
         onOpenChange={setCancelOpen}

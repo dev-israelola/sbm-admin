@@ -44,6 +44,10 @@ export interface Product {
   isFeatured: boolean;
   isBestSeller: boolean;
   isNewArrival: boolean;
+  concerns?: string[];
+  bulkMinQty?: number | null;
+  bulkDiscountType?: "PERCENT" | "PRICE" | null;
+  bulkDiscountValue?: number | null;
   tags: string[];
   seoTitle?: string;
   seoDescription?: string;

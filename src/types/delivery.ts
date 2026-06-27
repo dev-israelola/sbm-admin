@@ -32,7 +32,7 @@ export interface DeliveryAssignment {
   assigneeId?: string;
   assigneeName?: string;
   status: DeliveryStatus;
-  paymentMethod: "paystack" | "pod";
+  paymentMethod: "paystack" | "pod" | "bank_transfer";
   amountToCollect: number;
   collectionStatus: DeliveryCollectionStatus;
   deliveryFee: number;
@@ -60,7 +60,7 @@ export interface PickupHandoff {
   stationCity: string;
   stationState: string;
   stationAddress: string;
-  paymentMethod: "paystack" | "pod";
+  paymentMethod: "paystack" | "pod" | "bank_transfer";
   amountToCollect: number;
   collectionStatus: DeliveryCollectionStatus;
   status: PickupHandoffStatus;

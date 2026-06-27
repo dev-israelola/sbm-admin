@@ -7,6 +7,7 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { MoneyDisplay } from "@/components/ui/money";
 import { Badge } from "@/components/ui/badge";
 import { DeliveryStatusBadge, CollectionStatusBadge } from "@/components/delivery/status-badge";
+import { paymentMethodShort } from "@/lib/admin-normalizers";
 import { useDeliveries } from "@/features/delivery/useDeliveries";
 import { PaginationFooter } from "@/components/ui/pagination-footer";
 import { DEFAULT_PAGE_SIZE } from "@/lib/pagination";
@@ -97,7 +98,7 @@ export function DeliveryScreen({
       render: (d) => (
         <div className="flex flex-col gap-1">
           <Badge variant={d.paymentMethod === "paystack" ? "info" : "warn"}>
-            {d.paymentMethod === "paystack" ? "Paystack" : "POD"}
+            {paymentMethodShort(d.paymentMethod)}
           </Badge>
           <CollectionStatusBadge status={d.collectionStatus} />
         </div>

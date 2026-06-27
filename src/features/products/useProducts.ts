@@ -60,6 +60,24 @@ export function useCategories() {
   });
 }
 
+export interface ConcernRecord {
+  id: string;
+  slug: string;
+  name: string;
+  blurb?: string;
+}
+
+export function useConcerns() {
+  const activePlatform = useAuthStore((s) => s.activePlatform);
+  return useQuery({
+    queryKey: ["concerns", activePlatform] as const,
+    queryFn: async () => {
+      const { data } = await api.get<ConcernRecord[]>("/concerns");
+      return data;
+    },
+  });
+}
+
 export function useCreateProduct() {
   const activePlatform = useAuthStore((s) => s.activePlatform);
   const qc = useQueryClient();

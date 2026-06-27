@@ -1,6 +1,6 @@
 import type { DeliveryStatus } from "./delivery";
 
-export type PaymentMethod = "paystack" | "pod";
+export type PaymentMethod = "paystack" | "pod" | "bank_transfer";
 
 export type DeliveryMethod = "home" | "pickup";
 

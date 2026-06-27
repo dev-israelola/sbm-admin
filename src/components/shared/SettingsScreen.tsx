@@ -10,6 +10,7 @@ import { PLATFORM_CONFIG } from "@/types/platform";
 import { useSaveSettings, useSettings } from "@/features/settings/useSettings";
 
 const SETTING_KEY = "admin.settings";
+const BULK_KEY = "pricing.bulkDiscount";
 
 export function SettingsScreen() {
   const activePlatform = useAuthStore((s) => s.activePlatform);
@@ -33,6 +34,8 @@ export function SettingsScreen() {
     notifLowStock: true,
     notifRefundRequest: true,
   });
+  // Global quantity discount (`pricing.bulkDiscount`) — read by the backend pricing engine.
+  const [bulk, setBulk] = useState({ enabled: true, minQty: 3, percent: 3 });
 
   useEffect(() => {
     setSettings((current) => ({
@@ -47,6 +50,10 @@ export function SettingsScreen() {
     if (row?.value && typeof row.value === "object") {
       setSettings((current) => ({ ...current, ...(row.value as Partial<typeof settings>) }));
     }
+    const bulkRow = savedSettings.data?.find((item) => item.key === BULK_KEY);
+    if (bulkRow?.value && typeof bulkRow.value === "object") {
+      setBulk((current) => ({ ...current, ...(bulkRow.value as Partial<typeof bulk>) }));
+    }
   }, [savedSettings.data]);
 
   function patch<K extends keyof typeof settings>(k: K, v: (typeof settings)[K]) {
@@ -55,6 +62,16 @@ export function SettingsScreen() {
   async function save(section: string) {
     await saveSettings.mutateAsync({ [SETTING_KEY]: settings });
     toast.success(`${section} settings saved.`);
+  }
+  async function saveBulk() {
+    await saveSettings.mutateAsync({
+      [BULK_KEY]: {
+        enabled: bulk.enabled,
+        minQty: Math.max(1, Math.round(bulk.minQty)),
+        percent: Math.max(0, Math.min(100, bulk.percent)),
+      },
+    });
+    toast.success("Quantity discount saved.");
   }
 
   return (
@@ -66,6 +83,7 @@ export function SettingsScreen() {
           <TabsTrigger value="store">Store</TabsTrigger>
           <TabsTrigger value="payment">Payment</TabsTrigger>
           <TabsTrigger value="delivery">Delivery</TabsTrigger>
+          <TabsTrigger value="pricing">Pricing</TabsTrigger>
           <TabsTrigger value="tax">Tax</TabsTrigger>
           <TabsTrigger value="rewards">Rewards</TabsTrigger>
           <TabsTrigger value="notif">Notifications</TabsTrigger>
@@ -98,6 +116,41 @@ export function SettingsScreen() {
             <FormInput label="Default delivery fee (₦)" type="number" step="100" value={settings.defaultDeliveryFee} onChange={(e) => patch("defaultDeliveryFee", Number(e.target.value))} />
             <FormInput label="Free shipping threshold (₦)" type="number" step="1000" value={settings.freeShippingThreshold} onChange={(e) => patch("freeShippingThreshold", Number(e.target.value))} />
             <Button onClick={() => save("Delivery")} disabled={saveSettings.isPending}>Save changes</Button>
+          </section>
+        </TabsContent>
+
+        <TabsContent value="pricing">
+          <section className="card max-w-xl space-y-3 p-5">
+            <h2 className="font-display text-base">Quantity discount</h2>
+            <p className="text-[13px] text-ink-muted">
+              Automatic bulk discount on every product. When a customer buys the threshold quantity or
+              more of the same product, the unit price drops by this percent. A per-product discount set
+              on a product overrides this default for that product.
+            </p>
+            <FormSwitch
+              label="Enable quantity discount"
+              description="Applies the default to all products."
+              checked={bulk.enabled}
+              onCheckedChange={(v) => setBulk((b) => ({ ...b, enabled: v }))}
+            />
+            <FormInput
+              label="Buy quantity (threshold)"
+              type="number"
+              step="1"
+              min="1"
+              value={bulk.minQty}
+              onChange={(e) => setBulk((b) => ({ ...b, minQty: Number(e.target.value) }))}
+            />
+            <FormInput
+              label="Discount (%)"
+              type="number"
+              step="1"
+              min="0"
+              max="100"
+              value={bulk.percent}
+              onChange={(e) => setBulk((b) => ({ ...b, percent: Number(e.target.value) }))}
+            />
+            <Button onClick={saveBulk} disabled={saveSettings.isPending}>Save changes</Button>
           </section>
         </TabsContent>
 

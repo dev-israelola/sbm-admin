@@ -20,7 +20,18 @@ export interface Consultation {
   consultantId?: string;
   consultantName?: string;
   recommendationId?: string;
+  scheduledAt?: string | null;
+  fee?: number;
+  paymentStatus?: string;
+  paymentMethod?: string | null;
   createdAt: string;
+}
+
+export interface ConsultationBlock {
+  id: string;
+  startsAt: string;
+  endsAt: string;
+  reason?: string | null;
 }
 
 export interface RecommendationProductRef {

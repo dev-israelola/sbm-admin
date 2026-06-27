@@ -24,6 +24,7 @@ import {
   Warehouse,
 } from "lucide-react";
 import { MetricCard } from "@/components/ui/metric-card";
+import { paymentMethodShort } from "@/lib/admin-normalizers";
 import { ChartCard } from "@/components/ui/chart-card";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { MoneyDisplay } from "@/components/ui/money";
@@ -342,7 +343,7 @@ export function AdminOverview({ roleScope = "admin" }: Props) {
                     <p className="text-[11px] text-ink-muted">{o.customerName} · {formatDate(o.createdAt)}</p>
                   </div>
                   <p className="text-[12px] text-ink-muted">
-                    {o.paymentMethod === "paystack" ? "Paystack" : "POD"} · {o.deliveryMethod === "pickup" ? "Pickup" : "Home"}
+                    {paymentMethodShort(o.paymentMethod)} · {o.deliveryMethod === "pickup" ? "Pickup" : "Home"}
                   </p>
                   <OrderStatusBadge status={o.status} />
                   <MoneyDisplay value={o.total} className="font-medium" />

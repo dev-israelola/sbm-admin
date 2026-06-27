@@ -13,7 +13,7 @@ import { FormTextarea } from "@/components/forms/FormTextarea";
 import { FormSelect } from "@/components/forms/FormSelect";
 import { FormSwitch } from "@/components/forms/FormSwitch";
 import { ImagePicker } from "@/components/forms/ImagePicker";
-import { useCategories, useCreateProduct, useProduct, useUpdateProduct } from "@/features/products/useProducts";
+import { useCategories, useConcerns, useCreateProduct, useProduct, useUpdateProduct } from "@/features/products/useProducts";
 import { useAuthStore } from "@/store/auth-store";
 import { PLATFORM_CONFIG } from "@/types/platform";
 import { slugify, suggestSku } from "@/lib/slug";
@@ -52,6 +52,10 @@ const schema = z.object({
   isFeatured: z.boolean(),
   isBestSeller: z.boolean(),
   isNewArrival: z.boolean(),
+  concernSlugs: z.array(z.string()),
+  bulkMinQty: z.coerce.number().int().min(0),
+  bulkDiscountType: z.enum(["PERCENT", "PRICE"]),
+  bulkDiscountValue: z.coerce.number().min(0),
   seoTitle: z.string().optional(),
   seoDescription: z.string().optional(),
   images: z.array(z.string().min(1)).min(1, "At least one image is required"),
@@ -70,6 +74,7 @@ export function ProductFormScreen({ rolePath, mode }: Props) {
   const navigate = useNavigate();
   const existing = useProduct(mode === "edit" ? id : undefined);
   const categories = useCategories();
+  const concerns = useConcerns();
   const create = useCreateProduct();
   const update = useUpdateProduct();
   const defaultBrand = platform.defaultBrand;
@@ -93,6 +98,10 @@ export function ProductFormScreen({ rolePath, mode }: Props) {
     isFeatured: false,
     isBestSeller: false,
     isNewArrival: false,
+    concernSlugs: [],
+    bulkMinQty: 0,
+    bulkDiscountType: "PERCENT",
+    bulkDiscountValue: 0,
     seoTitle: "",
     seoDescription: "",
     images: [],
@@ -168,6 +177,11 @@ export function ProductFormScreen({ rolePath, mode }: Props) {
         isFeatured: p.isFeatured,
         isBestSeller: p.isBestSeller,
         isNewArrival: p.isNewArrival,
+        concernSlugs: p.concerns ?? [],
+        bulkMinQty: p.bulkMinQty ?? 0,
+        bulkDiscountType: (p.bulkDiscountType ?? "PERCENT") as "PERCENT" | "PRICE",
+        bulkDiscountValue:
+          p.bulkDiscountType === "PRICE" ? koboToNaira(p.bulkDiscountValue ?? 0) : p.bulkDiscountValue ?? 0,
         seoTitle: p.seoTitle ?? "",
         seoDescription: p.seoDescription ?? "",
         images: p.images ?? [],
@@ -180,6 +194,7 @@ export function ProductFormScreen({ rolePath, mode }: Props) {
 
   async function submit(v: Values) {
     const statusByApi = { draft: "DRAFT", active: "ACTIVE", archived: "ARCHIVED" } as const;
+    const hasBulk = v.bulkMinQty >= 2 && v.bulkDiscountValue > 0;
     const payload = {
       name: v.name,
       slug: v.slug,
@@ -200,6 +215,14 @@ export function ProductFormScreen({ rolePath, mode }: Props) {
       isFeatured: v.isFeatured,
       isBestSeller: v.isBestSeller,
       isNewArrival: v.isNewArrival,
+      concernSlugs: v.concernSlugs,
+      bulkMinQty: hasBulk ? v.bulkMinQty : null,
+      bulkDiscountType: hasBulk ? v.bulkDiscountType : null,
+      bulkDiscountValue: hasBulk
+        ? v.bulkDiscountType === "PRICE"
+          ? nairaToKobo(v.bulkDiscountValue)
+          : v.bulkDiscountValue
+        : null,
       // Trim to the backend limits so over-length copy never blocks the save.
       seoTitle: v.seoTitle?.slice(0, SEO_TITLE_MAX),
       seoDescription: v.seoDescription?.slice(0, SEO_DESC_MAX),
@@ -347,8 +370,8 @@ export function ProductFormScreen({ rolePath, mode }: Props) {
             name="isBestSeller"
             render={({ field }) => (
               <FormSwitch
-                label="Best seller"
-                description="Shows a 'Bestseller' tag on product cards."
+                label="Best seller (pin)"
+                description="Pins this product to the front of the storefront Best Sellers row (which otherwise ranks by units sold)."
                 checked={field.value}
                 onCheckedChange={field.onChange}
               />
@@ -366,6 +389,84 @@ export function ProductFormScreen({ rolePath, mode }: Props) {
               />
             )}
           />
+        </section>
+
+        <section className="card p-5 space-y-3">
+          <h2 className="font-display text-base">Skin concerns</h2>
+          <p className="text-xs text-ink-muted">
+            Tag the concerns this product helps with. Powers the storefront "Shop by concern" filter.
+          </p>
+          <Controller
+            control={form.control}
+            name="concernSlugs"
+            render={({ field }) => (
+              <div className="flex flex-wrap gap-2">
+                {(concerns.data ?? []).map((c) => {
+                  const selected = field.value.includes(c.slug);
+                  return (
+                    <button
+                      type="button"
+                      key={c.slug}
+                      onClick={() =>
+                        field.onChange(
+                          selected
+                            ? field.value.filter((s) => s !== c.slug)
+                            : [...field.value, c.slug],
+                        )
+                      }
+                      className={`rounded-full border px-3 py-1.5 text-sm transition-colors ${
+                        selected
+                          ? "border-accent bg-accent/10 text-ink"
+                          : "border-line text-ink-muted hover:border-ink/30"
+                      }`}
+                    >
+                      {c.name}
+                    </button>
+                  );
+                })}
+                {!concerns.isLoading && (concerns.data?.length ?? 0) === 0 && (
+                  <p className="text-xs text-ink-muted">No concerns defined.</p>
+                )}
+              </div>
+            )}
+          />
+        </section>
+
+        <section className="card p-5 space-y-3">
+          <h2 className="font-display text-base">Quantity discount</h2>
+          <p className="text-xs text-ink-muted">
+            Reward bulk buyers: when a customer buys this many of this product, its unit price drops.
+            Set quantity to 0 for no discount.
+          </p>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <FormInput
+              label="Buy quantity (≥2)"
+              type="number"
+              {...form.register("bulkMinQty")}
+              error={form.formState.errors.bulkMinQty?.message}
+            />
+            <Controller
+              control={form.control}
+              name="bulkDiscountType"
+              render={({ field }) => (
+                <FormSelect
+                  label="Discount type"
+                  value={field.value}
+                  onChange={field.onChange}
+                  options={[
+                    { value: "PERCENT", label: "Percent off" },
+                    { value: "PRICE", label: "New unit price" },
+                  ]}
+                />
+              )}
+            />
+            <FormInput
+              label={form.watch("bulkDiscountType") === "PRICE" ? "Unit price (₦)" : "Percent off (%)"}
+              type="number"
+              {...form.register("bulkDiscountValue")}
+              error={form.formState.errors.bulkDiscountValue?.message}
+            />
+          </div>
         </section>
 
         <section className="card p-5 space-y-3">

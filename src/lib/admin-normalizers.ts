@@ -18,7 +18,9 @@ export function toBackendOrderStatus(status: OrderStatus) {
 }
 
 export function toBackendPaymentMethod(method: PaymentMethod) {
-  return method === "pod" ? "PAYMENT_ON_DELIVERY" : "PAYSTACK";
+  if (method === "pod") return "PAYMENT_ON_DELIVERY";
+  if (method === "bank_transfer") return "BANK_TRANSFER";
+  return "PAYSTACK";
 }
 
 export function toBackendDeliveryMethod(method: DeliveryMethod) {
@@ -30,7 +32,21 @@ export function toBackendDeliveryStatus(status: DeliveryStatus) {
 }
 
 export function normalizePaymentMethod(value: unknown): PaymentMethod {
-  return value === "PAYMENT_ON_DELIVERY" || value === "pod" ? "pod" : "paystack";
+  if (value === "BANK_TRANSFER" || value === "bank_transfer") return "bank_transfer";
+  if (value === "PAYMENT_ON_DELIVERY" || value === "pod") return "pod";
+  return "paystack";
+}
+
+export function paymentMethodLabel(method: PaymentMethod): string {
+  if (method === "paystack") return "Paystack";
+  if (method === "bank_transfer") return "Bank transfer";
+  return "Payment on delivery";
+}
+
+export function paymentMethodShort(method: PaymentMethod): string {
+  if (method === "paystack") return "Paystack";
+  if (method === "bank_transfer") return "Transfer";
+  return "POD";
 }
 
 export function normalizePaymentStatus(value: unknown): PaymentStatus {
@@ -83,6 +99,12 @@ export function normalizeProduct(raw: AnyRecord): Product {
     isFeatured: Boolean(raw.isFeatured),
     isBestSeller: Boolean(raw.isBestSeller),
     isNewArrival: Boolean(raw.isNewArrival),
+    concerns: Array.isArray(raw.concerns)
+      ? raw.concerns.map((c: AnyRecord | string) => (typeof c === "string" ? c : c.slug)).filter(Boolean)
+      : [],
+    bulkMinQty: raw.bulkMinQty ?? null,
+    bulkDiscountType: raw.bulkDiscountType ?? null,
+    bulkDiscountValue: raw.bulkDiscountValue ?? null,
     tags: raw.tags ?? [],
     seoTitle: raw.seoTitle,
     seoDescription: raw.seoDescription,

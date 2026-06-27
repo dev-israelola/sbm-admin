@@ -3,7 +3,7 @@ import { api } from "@/lib/api";
 import { DEFAULT_PAGE_SIZE, paginated } from "@/lib/pagination";
 import { qk } from "@/lib/query-client";
 import { useAuthStore } from "@/store/auth-store";
-import type { Consultation, ConsultationRecommendation } from "@/types/consultation";
+import type { Consultation, ConsultationBlock, ConsultationRecommendation } from "@/types/consultation";
 
 function normalizeConsultation(raw: Record<string, any>): Consultation {
   return {
@@ -21,6 +21,10 @@ function normalizeConsultation(raw: Record<string, any>): Consultation {
     consultantId: raw.assignedConsultantId ?? raw.consultantId,
     consultantName: raw.consultantName,
     recommendationId: raw.recommendationId ?? raw.id,
+    scheduledAt: raw.scheduledAt ?? null,
+    fee: raw.fee ?? 0,
+    paymentStatus: String(raw.paymentStatus ?? "").toLowerCase(),
+    paymentMethod: raw.paymentMethod ?? null,
     createdAt: raw.createdAt,
   };
 }
@@ -100,6 +104,58 @@ export function useAssignConsultant() {
       return normalizeConsultation(data);
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: qk.consultations(activePlatform) }),
+  });
+}
+
+export function useConfirmConsultationPayment() {
+  const activePlatform = useAuthStore((s) => s.activePlatform);
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { data } = await api.post<Record<string, any>>(`/consultations/${id}/confirm-payment`, {});
+      return normalizeConsultation(data);
+    },
+    onSuccess: (_, id) => {
+      qc.invalidateQueries({ queryKey: qk.consultations(activePlatform) });
+      qc.invalidateQueries({ queryKey: qk.consultation(activePlatform, id) });
+    },
+  });
+}
+
+const BLOCKS_KEY = (platform: string) => ["consultation-blocks", platform] as const;
+
+export function useConsultationBlocks() {
+  const activePlatform = useAuthStore((s) => s.activePlatform);
+  return useQuery({
+    queryKey: BLOCKS_KEY(activePlatform),
+    queryFn: async () => {
+      const { data } = await api.get<ConsultationBlock[]>("/consultations/blocks");
+      return data;
+    },
+  });
+}
+
+export function useCreateConsultationBlock() {
+  const activePlatform = useAuthStore((s) => s.activePlatform);
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (body: { startsAt: string; endsAt: string; reason?: string }) => {
+      const { data } = await api.post<ConsultationBlock>("/consultations/blocks", body);
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: BLOCKS_KEY(activePlatform) }),
+  });
+}
+
+export function useDeleteConsultationBlock() {
+  const activePlatform = useAuthStore((s) => s.activePlatform);
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      await api.delete(`/consultations/blocks/${id}`);
+      return id;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: BLOCKS_KEY(activePlatform) }),
   });
 }
 

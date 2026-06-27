@@ -4,6 +4,7 @@ import { Link, useParams } from "react-router-dom";
 import { ChevronLeft, MapPin, Phone } from "lucide-react";
 import { toast } from "sonner";
 import { useDelivery, useUpdateDeliveryStatus } from "@/features/delivery/useDeliveries";
+import { paymentMethodShort } from "@/lib/admin-normalizers";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
@@ -60,7 +61,7 @@ export function DeliveryDetailScreen({ rolePath }: { rolePath: string }) {
         <div className="flex items-center gap-2 flex-wrap">
           <DeliveryStatusBadge status={d.status} />
           <Badge variant={d.paymentMethod === "paystack" ? "info" : "warn"}>
-            {d.paymentMethod === "paystack" ? "Paystack" : "POD"}
+            {paymentMethodShort(d.paymentMethod)}
           </Badge>
           <CollectionStatusBadge status={d.collectionStatus} />
         </div>

@@ -13,8 +13,8 @@ export interface PlatformConfig {
   settingsStoreName: string;
   settingsStoreEmail: string;
 }
-
-export const ALL_PLATFORMS: Platform[] = ["naturale", "holistic"];
+// export const ALL_PLATFORMS: Platform[] = ["naturale", "holistic"];
+export const ALL_PLATFORMS: Platform[] = ["naturale"];
 
 export const PLATFORM_CONFIG: Record<Platform, PlatformConfig> = {
   naturale: {

@@ -33,7 +33,7 @@ import {
 export function DeliveryTerminalsScreen() {
   const { data: companies, isLoading: companiesLoading } = useDeliveryCompanies();
   const [companyId, setCompanyId] = useState<string>("");
-  const [stateFilter, setStateFilter] = useState<string>("");
+  const [stateFilter, setStateFilter] = useState<string>("all");
   const [addCarrierOpen, setAddCarrierOpen] = useState(false);
   const [terminalForm, setTerminalForm] = useState<{ open: boolean; terminal?: AdminDeliveryTerminal }>({ open: false });
   const [deleteFor, setDeleteFor] = useState<AdminDeliveryTerminal | null>(null);
@@ -52,7 +52,7 @@ export function DeliveryTerminalsScreen() {
     [terminals],
   );
   const rows = useMemo(
-    () => (stateFilter ? (terminals ?? []).filter((t) => t.state === stateFilter) : terminals ?? []),
+    () => (stateFilter && stateFilter !== "all" ? (terminals ?? []).filter((t) => t.state === stateFilter) : terminals ?? []),
     [terminals, stateFilter],
   );
   const pricedCount = (terminals ?? []).filter((t) => t.price > 0).length;
@@ -128,7 +128,7 @@ export function DeliveryTerminalsScreen() {
           value={companyId}
           onChange={(v) => {
             setCompanyId(v);
-            setStateFilter("");
+            setStateFilter("all");
           }}
           options={(companies ?? []).map((c) => ({
             value: c.id,
@@ -139,7 +139,7 @@ export function DeliveryTerminalsScreen() {
           label="State"
           value={stateFilter}
           onChange={setStateFilter}
-          options={[{ value: "", label: "All states" }, ...states.map((s) => ({ value: s, label: s }))]}
+          options={[{ value: "all", label: "All states" }, ...states.map((s) => ({ value: s, label: s }))]}
         />
         <div className="flex items-end">
           <p className="text-[12px] text-ink-muted">

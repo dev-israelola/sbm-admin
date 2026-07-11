@@ -100,7 +100,10 @@ export function ConsultationDetailScreen({ rolePath }: { rolePath: string }) {
       <header className="mt-3 mb-6 flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="eyebrow">Consultation</p>
-          <h1 className="font-display text-2xl text-ink">{c.customerName}</h1>
+          <h1 className="flex items-center gap-2 font-display text-2xl text-ink">
+            {c.customerName}
+            {c.isGuest && <Badge variant="neutral">Guest</Badge>}
+          </h1>
           <p className="text-[12px] text-ink-muted mt-1">{c.primaryConcern} · {formatDate(c.preferredDate)} {c.preferredTime}</p>
         </div>
         <Badge variant={c.status === "completed" ? "success" : c.status === "scheduled" ? "info" : c.status === "cancelled" ? "danger" : "warn"}>

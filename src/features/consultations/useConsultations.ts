@@ -8,10 +8,11 @@ import type { Consultation, ConsultationBlock, ConsultationRecommendation } from
 function normalizeConsultation(raw: Record<string, any>): Consultation {
   return {
     id: raw.id,
+    isGuest: !raw.userId,
     customerId: raw.userId ?? raw.customerId ?? "",
-    customerName: raw.customerName ?? raw.user?.displayName ?? "Customer",
-    customerEmail: raw.customerEmail ?? raw.user?.email ?? "",
-    customerPhone: raw.customerPhone ?? raw.user?.phone ?? "",
+    customerName: raw.customerName ?? raw.user?.displayName ?? raw.guestName ?? "Guest",
+    customerEmail: raw.customerEmail ?? raw.user?.email ?? raw.guestEmail ?? "",
+    customerPhone: raw.customerPhone ?? raw.user?.phone ?? raw.guestPhone ?? "",
     primaryConcern: raw.primaryConcern ?? "",
     goal: raw.wellnessGoal ?? raw.goal ?? "",
     preferredDate: raw.preferredDate ?? raw.createdAt,

@@ -7,6 +7,7 @@ export type ConsultationStatus =
 
 export interface Consultation {
   id: string;
+  isGuest?: boolean;
   customerId: string;
   customerName: string;
   customerEmail: string;

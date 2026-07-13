@@ -38,7 +38,7 @@ const schema = z.object({
   // Auto-suggested from the name; editable and optional.
   sku: z.string().optional(),
   brand: z.string().min(2),
-  category: z.string().min(2),
+  categoryIds: z.array(z.string()).min(1, "Select at least one category"),
   description: z.string().min(20),
   shortDescription: z.string().min(5),
   benefits: z.string(),
@@ -84,7 +84,7 @@ export function ProductFormScreen({ rolePath, mode }: Props) {
     slug: "",
     sku: "",
     brand: defaultBrand,
-    category: "",
+    categoryIds: [],
     description: "",
     shortDescription: "",
     benefits: "",
@@ -117,12 +117,13 @@ export function ProductFormScreen({ rolePath, mode }: Props) {
   const skuTouched = useRef(false);
   const seoTitleTouched = useRef(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [categorySearch, setCategorySearch] = useState("");
   const name = form.watch("name");
   const seoDescription = form.watch("seoDescription") ?? "";
 
   useEffect(() => {
-    if (mode === "new" && categories.data?.[0] && !form.getValues("category")) {
-      form.setValue("category", categories.data[0].id);
+    if (mode === "new" && categories.data?.[0] && form.getValues("categoryIds").length === 0) {
+      form.setValue("categoryIds", [categories.data[0].id]);
     }
   }, [categories.data, form, mode]);
 
@@ -163,7 +164,7 @@ export function ProductFormScreen({ rolePath, mode }: Props) {
         slug: p.slug,
         sku: p.sku,
         brand: p.brand,
-        category: p.categoryId ?? "",
+        categoryIds: p.categories ? (p.categories as any[]).map((c) => c.id) : [],
         description: p.description,
         shortDescription: p.shortDescription,
         benefits: p.benefits.join("\n"),
@@ -200,7 +201,7 @@ export function ProductFormScreen({ rolePath, mode }: Props) {
       slug: v.slug,
       sku: v.sku,
       brand: v.brand,
-      categoryId: v.category,
+      categoryIds: v.categoryIds,
       description: v.description,
       shortDescription: v.shortDescription,
       benefits: v.benefits.split("\n").map((s) => s.trim()).filter(Boolean),
@@ -278,19 +279,7 @@ export function ProductFormScreen({ rolePath, mode }: Props) {
               </button>
             </div>
             <FormInput label="Brand" {...form.register("brand")} error={form.formState.errors.brand?.message} />
-            <Controller
-              control={form.control}
-              name="category"
-              render={({ field }) => (
-                <FormSelect
-                  label="Category"
-                  value={field.value}
-                  onChange={field.onChange}
-                  options={(categories.data ?? []).map((category) => ({ value: category.id, label: category.name }))}
-                  placeholder={categories.isLoading ? "Loading categories..." : "Select category"}
-                />
-              )}
-            />
+            <div />
             <Controller
               control={form.control}
               name="status"
@@ -388,6 +377,63 @@ export function ProductFormScreen({ rolePath, mode }: Props) {
                 onCheckedChange={field.onChange}
               />
             )}
+          />
+        </section>
+
+        <section className="card p-5 space-y-3">
+          <h2 className="font-display text-base">Categories</h2>
+          <Controller
+            control={form.control}
+            name="categoryIds"
+            render={({ field, fieldState }) => {
+              const filtered = (categories.data ?? []).filter((c) =>
+                c.name.toLowerCase().includes(categorySearch.toLowerCase())
+              );
+              return (
+                <div className="space-y-3">
+                  <input
+                    type="text"
+                    placeholder="Search categories..."
+                    value={categorySearch}
+                    onChange={(e) => setCategorySearch(e.target.value)}
+                    className="w-full h-9 rounded-md border border-line bg-background px-3 text-sm focus:outline-none focus:ring-1 focus:ring-accent"
+                  />
+                  <div className="max-h-56 overflow-y-auto rounded-md border border-line/50 p-2 space-y-0.5 custom-scrollbar">
+                    {filtered.map((c) => {
+                      const selected = field.value.includes(c.id);
+                      return (
+                        <label
+                          key={c.id}
+                          className={`flex items-center gap-3 rounded-md px-3 py-2 cursor-pointer transition-colors ${
+                            selected ? "bg-accent/5 border-l-2 border-accent" : "border-l-2 border-transparent hover:bg-surface"
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={selected}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                field.onChange([...field.value, c.id]);
+                              } else {
+                                field.onChange(field.value.filter((id) => id !== c.id));
+                              }
+                            }}
+                            className="h-4 w-4 rounded border-line text-accent focus:ring-accent accent-accent"
+                          />
+                          <span className={`text-sm ${selected ? "text-ink font-medium" : "text-ink-muted"}`}>
+                            {c.name}
+                          </span>
+                        </label>
+                      );
+                    })}
+                    {!categories.isLoading && filtered.length === 0 && (
+                      <div className="p-4 text-center text-sm text-ink-muted">No matching categories.</div>
+                    )}
+                  </div>
+                  {fieldState.error && <p className="text-[13px] text-red-500 font-medium">{fieldState.error.message}</p>}
+                </div>
+              );
+            }}
           />
         </section>
 

@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import type { PaginationMeta } from "@/lib/pagination";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface PaginationFooterProps {
   meta?: PaginationMeta;
@@ -35,8 +36,25 @@ export function PaginationFooter({ meta, page, loading, itemLabel, onPageChange 
         >
           Previous
         </Button>
-        <span className="min-w-20 text-center">
-          Page {current} of {meta?.totalPages ?? 1}
+        <span className="min-w-20 text-center flex items-center justify-center gap-1.5 whitespace-nowrap">
+          <span>Page</span>
+          <Select
+            value={String(current)}
+            onValueChange={(val) => onPageChange(Number(val))}
+            disabled={loading || (meta?.totalPages ?? 1) <= 1}
+          >
+            <SelectTrigger className="h-7 w-[70px] text-xs px-2 bg-transparent">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {Array.from({ length: meta?.totalPages ?? 1 }, (_, i) => i + 1).map((p) => (
+                <SelectItem key={p} value={String(p)}>
+                  {p}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <span>of {meta?.totalPages ?? 1}</span>
         </span>
         <Button
           type="button"

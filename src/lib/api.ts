@@ -92,8 +92,20 @@ api.interceptors.response.use(
       }
     }
 
-    const message =
-      err?.response?.data?.message || err?.message || "Something went wrong. Please try again.";
-    return Promise.reject(new Error(message));
+    let data = err?.response?.data;
+    if (typeof data === 'string') {
+      try { data = JSON.parse(data); } catch (e) {}
+    }
+    
+    let backendMessage = typeof data === 'object' && data !== null ? (data.message || data.error) : null;
+    if (Array.isArray(backendMessage)) backendMessage = backendMessage[0];
+    
+    if (backendMessage) {
+       // Attach the safely parsed message natively back onto the error object 
+       // so React Query can read it directly!
+       err.message = backendMessage;
+    }
+    
+    return Promise.reject(err);
   },
 );

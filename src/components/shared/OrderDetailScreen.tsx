@@ -13,6 +13,7 @@ import {
   MessageCircle,
   ClipboardCheck,
   Loader2,
+  Printer,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useOrder, useUpdateOrderStatus, useAddOrderNote, useReconcileOrder, useConfirmBankTransfer } from "@/features/orders/useOrders";
@@ -34,6 +35,12 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { FormInput } from "@/components/forms/FormInput";
 import { PermissionGate } from "@/components/layout/PermissionGate";
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuTrigger 
+} from "@/components/ui/dropdown-menu";
 import { can } from "@/lib/permissions";
 import { formatDate, formatDateTime, formatNaira } from "@/lib/format";
 import type { OrderStatus } from "@/types/order";
@@ -336,6 +343,22 @@ export function OrderDetailScreen({ rolePath }: Props) {
             </p>
 
             <div className="space-y-2">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button className="w-full bg-white border border-line/70 hover:bg-neutral-100 text-ink" size="md">
+                    <Printer className="h-4 w-4" /> Print Receipt...
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="center" className="w-[calc(100%-2rem)] max-w-sm">
+                  <DropdownMenuItem onClick={() => window.open(`/print/orders/${order.id}?format=thermal`, '_blank')} className="cursor-pointer py-2">
+                    Thermal Dispatch Format (80mm)
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => window.open(`/print/orders/${order.id}?format=a4`, '_blank')} className="cursor-pointer py-2">
+                    Standard Layout Invoice (A4)
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
               {isPOD && order.status === "pending-verification" && can(role, "orders.verify") && (
                 <Button className="w-full" size="md" onClick={() => setVerifyOpen(true)}>
                   <ShieldCheck className="h-4 w-4" /> Verify customer

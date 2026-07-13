@@ -8,7 +8,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { FormInput } from "@/components/forms/FormInput";
 import { FormSelect } from "@/components/forms/FormSelect";
-import { useInviteStaff } from "@/features/auth/useAuth";
+import { useInviteStaff, useRoles } from "@/features/auth/useAuth";
 import { useAuthStore } from "@/store/auth-store";
 
 // Backend UserRole enum values + labels.
@@ -29,21 +29,41 @@ type Values = z.infer<typeof schema>;
 
 export function AddStaffDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
   const invite = useInviteStaff();
+  const { data: dynamicRoles, isLoading: rolesLoading } = useRoles();
   const currentRole = useAuthStore((s) => s.user?.role);
-  // Managers can only invite non-privileged staff.
-  const roleOptions =
-    currentRole === "manager"
-      ? ALL_ROLE_OPTIONS.filter((r) => r.value !== "ADMIN" && r.value !== "MANAGER")
-      : ALL_ROLE_OPTIONS;
+  
+  // Create a combined select map, fallback gracefully if not loaded
+  const dynamicOptions = dynamicRoles?.map((r) => ({
+    value: r.id, 
+    label: r.name 
+  })) || [];
 
   const form = useForm<Values>({
     resolver: zodResolver(schema),
-    defaultValues: { name: "", email: "", role: roleOptions[roleOptions.length - 1].value },
+    defaultValues: { name: "", email: "", role: "" },
   });
 
   async function submit(v: Values) {
     try {
-      await invite.mutateAsync(v);
+      const selectedRole = dynamicRoles?.find(r => r.id === v.role);
+      let baseFallback = "MANAGER";
+      
+      if (selectedRole) {
+         const n = selectedRole.name.toLowerCase();
+         if (n.includes('admin')) baseFallback = "ADMIN";
+         else if (n.includes('accountant') || n.includes('finance')) baseFallback = "ACCOUNTANT";
+         else if (n.includes('consultant')) baseFallback = "CONSULTANT";
+         else if (n.includes('delivery') || n.includes('dispatch')) baseFallback = "DELIVERY_STAFF";
+      }
+
+      const payload = {
+         name: v.name,
+         email: v.email,
+         role: baseFallback,
+         accessRoleId: v.role
+      };
+      
+      await invite.mutateAsync(payload);
       toast.success(`Invite sent to ${v.email}.`);
       onOpenChange(false);
       form.reset();
@@ -69,11 +89,12 @@ export function AddStaffDialog({ open, onOpenChange }: { open: boolean; onOpenCh
             name="role"
             render={({ field }) => (
               <FormSelect
-                label="Role"
+                label={rolesLoading ? "Loading roles..." : "Assigned Role"}
                 value={field.value}
                 onChange={field.onChange}
-                options={roleOptions}
+                options={dynamicOptions}
                 error={form.formState.errors.role?.message}
+                disabled={rolesLoading}
               />
             )}
           />

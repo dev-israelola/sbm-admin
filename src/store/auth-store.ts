@@ -8,6 +8,8 @@ export interface SessionUser {
   fullName: string;
   email: string;
   role: Role;
+  customRoleName?: string;
+  permissions?: string[];
   platforms: Platform[];
 }
 

@@ -32,9 +32,11 @@ export default function LoginPage() {
   const login = useLogin();
   const form = useForm<Values>({ resolver: zodResolver(schema), defaultValues: { email: "", password: "" } });
   const [busy, setBusy] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);
 
   async function submit(values: Values) {
     setBusy(true);
+    setApiError(null);
     try {
       const res = await login.mutateAsync({ ...values, preferredPlatform });
       const platformLabel = PLATFORM_CONFIG[res.activePlatform].shortLabel;
@@ -42,8 +44,20 @@ export default function LoginPage() {
         description: `Signed in to ${platformLabel}.`,
       });
       navigate(next ?? ROLE_HOME[res.user.role], { replace: true });
-    } catch (e) {
-      toast.error("Couldn't sign in", { description: (e as Error).message });
+    } catch (e: any) {
+      let rawData = e?.message || "Couldn't sign in. Please try again.";
+      if (e?.response?.data) {
+        rawData = typeof e.response.data === 'string' ? e.response.data : JSON.stringify(e.response.data);
+        
+        // Final attempt to elegantly extract it if it's a structural JSON:
+        try {
+           const parsed = typeof e.response.data === 'string' ? JSON.parse(e.response.data) : e.response.data;
+           if (parsed.message) rawData = typeof parsed.message === 'string' ? parsed.message : JSON.stringify(parsed.message);
+        } catch (_) {}
+      }
+      
+      setApiError(rawData);
+      toast.error("Couldn't sign in", { description: rawData });
     } finally {
       setBusy(false);
     }
@@ -102,6 +116,11 @@ export default function LoginPage() {
               error={form.formState.errors.password?.message}
               autoComplete="current-password"
             />
+            {apiError && (
+              <div className="flex bg-danger/10 text-danger text-[13px] border border-danger/20 rounded-md p-3">
+                {apiError}
+              </div>
+            )}
             <Button type="submit" className="w-full" size="lg" disabled={busy}>
               {busy ? "Signing in..." : "Sign in"}
             </Button>

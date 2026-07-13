@@ -27,8 +27,8 @@ export function RoleSwitcher() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger className="inline-flex h-9 items-center gap-2 rounded-md border border-line bg-surface px-2.5 text-[12px] text-ink hover:border-ink/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 sm:px-3">
-        <Shield className="h-3.5 w-3.5 text-accent" />
-        <span className="hidden font-medium sm:inline">{ROLE_LABEL[user.role]}</span>
+          <Shield className="h-4 w-4 text-ink-muted group-hover:text-ink sm:hidden" />
+          <span className="hidden font-medium sm:inline">{user ? (user.customRoleName || ROLE_LABEL[user.role]) : "Switch Role"}</span>
         <ChevronDown className="h-3 w-3 text-ink-muted" />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="min-w-[12rem]">

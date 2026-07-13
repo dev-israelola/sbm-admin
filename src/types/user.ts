@@ -11,6 +11,8 @@ export interface StaffUser {
   avatar?: string;
   joinedAt: string;
   active: boolean;
+  customRoleName?: string;
+  accessRoleId?: string;
 }
 
 export interface Customer {

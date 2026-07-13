@@ -168,8 +168,8 @@ export function DashboardHeader() {
               {user?.fullName.split(" ").map((p) => p[0]).slice(0, 2).join("")}
             </span>
             <span className="hidden min-w-0 md:flex md:flex-col md:text-left md:leading-tight">
-              <span className="text-[12px] text-ink font-medium">{user?.fullName}</span>
-              <span className="text-[10px] text-ink-muted">{user ? ROLE_LABEL[user.role] : ""}</span>
+              <p className="text-[13px] font-medium leading-none text-ink">{user?.fullName}</p>
+              <span className="text-[10px] text-ink-muted">{user ? (user.customRoleName || ROLE_LABEL[user.role]) : ""}</span>
             </span>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="min-w-[14rem]">

@@ -11,6 +11,9 @@ const ForbiddenPage = lazy(() => import("@/pages/ForbiddenPage"));
 const NotFoundPage = lazy(() => import("@/pages/NotFoundPage"));
 const RoleHomeRedirect = lazy(() => import("@/pages/RoleHomeRedirect"));
 
+// print layouts
+const OrderReceiptPrintPage = lazy(() => import("@/pages/print/OrderReceiptPrintPage"));
+
 // admin
 const adminMod = () => import("@/pages/admin");
 const AdminOverviewPage = lazy(() => adminMod().then((m) => ({ default: m.AdminOverviewPage })));
@@ -89,6 +92,9 @@ export function AppRoutes() {
       <Route path="/" element={<RoleHomeRedirect />} />
 
       <Route element={<ProtectedRoute />}>
+        {/* Isolated Print Routes */}
+        <Route path="/print/orders/:id" element={<OrderReceiptPrintPage />} />
+
         {/* Admin */}
         <Route element={<RoleGuard roles={["admin"]} />}>
           <Route path="/admin" element={<DashboardLayout />}>

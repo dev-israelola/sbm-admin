@@ -12,6 +12,27 @@ interface DashboardSidebarProps {
   onItemClick?: () => void;
 }
 
+function canAccessRoute(to: string, permissions?: string[]) {
+  if (!permissions || permissions.length === 0) return true; // Standard fallback
+  if (permissions.includes('*')) return true;
+
+  const has = (k: string) => permissions.some(p => p.startsWith(k));
+
+  if (to.includes('/orders') || to.includes('/refunds')) return has('orders');
+  if (to.includes('/delivery') || to.includes('/assignments')) return has('deliveries') || has('production') || has('orders');
+  if (to.includes('/products')) return has('products');
+  if (to.includes('/inventory')) return has('inventory');
+  if (to.includes('/customers')) return has('customers');
+  if (to.includes('/consultations')) return has('consultations');
+  if (to.includes('/accounting') || to.includes('/sales') || to.includes('/expenses') || to.includes('/reconciliation') || to.includes('/profit-loss') || to.includes('/rewards') || to.includes('/coupons')) return has('finance');
+  if (to.includes('/team')) return has('staff');
+  if (to.includes('/settings')) return has('settings');
+  if (to.includes('/reports')) return has('reports');
+  if (to.includes('/blog')) return has('marketing');
+  
+  return true; // Dashboard is visible if any permission exists
+}
+
 export function DashboardSidebar({ className, onItemClick }: DashboardSidebarProps) {
   const user = useAuthStore((s) => s.user);
   const activePlatform = useAuthStore((s) => s.activePlatform);
@@ -20,7 +41,16 @@ export function DashboardSidebar({ className, onItemClick }: DashboardSidebarPro
 
   if (!user) return null;
 
-  const sections = NAV_BY_ROLE[user.role];
+  let sections = NAV_BY_ROLE[user.role] || [];
+  
+  if (user.permissions && user.permissions.length > 0 && !user.permissions.includes('*')) {
+    sections = sections
+      .map(section => ({
+        ...section,
+        items: section.items.filter(it => canAccessRoute(it.to, user.permissions))
+      }))
+      .filter(section => section.items.length > 0);
+  }
 
   return (
     <aside

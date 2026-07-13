@@ -16,6 +16,8 @@ interface BackendUser {
   fullName?: string | null;
   firstName?: string | null;
   lastName?: string | null;
+  customRoleName?: string;
+  permissions?: string[];
 }
 
 interface BackendLoginResponse {
@@ -66,6 +68,8 @@ function toSessionUser(user: BackendUser, platforms: Platform[]): SessionUser {
     email: user.email,
     role,
     platforms,
+    customRoleName: user.customRoleName,
+    permissions: user.permissions,
   };
 }
 
@@ -101,11 +105,18 @@ export function useLogin() {
 
       if (!successes.length) {
         const firstError = attempts.find((attempt) => attempt.status === "rejected");
-        throw new Error(
-          firstError?.status === "rejected" && firstError.reason instanceof Error
-            ? firstError.reason.message
-            : "Invalid credentials",
-        );
+        if (firstError?.status === "rejected" && firstError.reason) {
+           const err = firstError.reason as any;
+           // If it's a structural Axios error with a backend payload, parse it cleanly!
+           if (err.response?.data) {
+             const d = err.response.data;
+             const msg = typeof d === 'string' ? d : (d.message || d.error || JSON.stringify(d));
+             throw new Error(msg);
+           }
+           // Fallback to exactly whatever the Axios engine caught
+           throw err;
+        }
+        throw new Error("Invalid credentials");
       }
 
       const platforms = successes.map((success) => success.platform);
@@ -141,6 +152,8 @@ function normalizeStaffUser(raw: Record<string, any>, activePlatform: Platform):
     phone: raw.phone,
     joinedAt: raw.createdAt ?? raw.lastLoginAt ?? new Date().toISOString(),
     active: raw.isActive ?? true,
+    customRoleName: raw.accessRole?.name,
+    accessRoleId: raw.accessRoleId,
   };
 }
 
@@ -209,11 +222,100 @@ export function useInviteStaff() {
   const qc = useQueryClient();
   const activePlatform = useAuthStore((s) => s.activePlatform);
   return useMutation({
-    mutationFn: async (body: { name: string; email: string; role: string }) => {
+    mutationFn: async (body: { name: string; email: string; role: string; accessRoleId?: string }) => {
       const { data } = await api.post("/users/invite", body);
       return data;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: qk.users(activePlatform) }),
+  });
+}
+
+export function useRoles() {
+  return useQuery({
+    queryKey: ["roles"],
+    queryFn: async () => {
+      const { data } = await api.get<{ id: string; name: string; isSystem: boolean; description?: string; permissions?: { permission: { key: string, description: string } }[], _count?: { users: number } }[]>("/roles");
+      return data;
+    },
+  });
+}
+
+export function usePermissions() {
+  return useQuery({
+    queryKey: ["permissions"],
+    queryFn: async () => {
+      const { data } = await api.get<{ id: string; key: string; description: string }[]>("/roles/permissions");
+      return data;
+    },
+  });
+}
+
+export function useCreateRole() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (body: { name: string; description?: string; permissionIds: string[] }) => {
+      const { data } = await api.post("/roles", body);
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["roles"] })
+  });
+}
+
+export function useUpdateRole() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, body }: { id: string; body: { name?: string; description?: string; permissionIds?: string[] } }) => {
+      const { data } = await api.put(`/roles/${id}`, body);
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["roles"] })
+  });
+}
+
+export function useDeleteRole() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { data } = await api.delete(`/roles/${id}`);
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["roles"] })
+  });
+}
+
+export function useUpdateUserStatus() {
+  const qc = useQueryClient();
+  const activePlatform = useAuthStore((s) => s.activePlatform);
+  return useMutation({
+    mutationFn: async ({ id, isActive }: { id: string; isActive: boolean }) => {
+      const { data } = await api.patch(`/users/${id}/status`, { isActive });
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: qk.users(activePlatform) })
+  });
+}
+
+export function useDeleteUser() {
+  const qc = useQueryClient();
+  const activePlatform = useAuthStore((s) => s.activePlatform);
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { data } = await api.delete(`/users/${id}`);
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: qk.users(activePlatform) })
+  });
+}
+
+export function useUpdateUserRole() {
+  const qc = useQueryClient();
+  const activePlatform = useAuthStore((s) => s.activePlatform);
+  return useMutation({
+    mutationFn: async ({ id, body }: { id: string; body: { role: string; accessRoleId?: string } }) => {
+      const { data } = await api.patch(`/users/${id}/role`, body);
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: qk.users(activePlatform) })
   });
 }
 

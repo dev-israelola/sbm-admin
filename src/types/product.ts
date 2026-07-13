@@ -26,6 +26,7 @@ export interface Product {
   brand: string;
   category: ProductCategory;
   categoryId?: string;
+  categories?: { id: string; name: string; slug?: string; blurb?: string }[];
   description: string;
   shortDescription: string;
   benefits: string[];

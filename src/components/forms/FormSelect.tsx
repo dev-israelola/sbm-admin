@@ -24,6 +24,7 @@ interface FormSelectProps {
   error?: string;
   className?: string;
   id?: string;
+  disabled?: boolean;
 }
 
 export function FormSelect({
@@ -36,13 +37,14 @@ export function FormSelect({
   error,
   className,
   id,
+  disabled,
 }: FormSelectProps) {
   const autoId = React.useId();
   const inputId = id ?? autoId;
   return (
     <div className={cn("flex flex-col gap-1", className)}>
       <Label htmlFor={inputId}>{label}</Label>
-      <Select value={value} onValueChange={onChange}>
+      <Select value={value} onValueChange={onChange} disabled={disabled}>
         <SelectTrigger id={inputId} aria-invalid={!!error} className={cn(error && "border-danger")}>
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>

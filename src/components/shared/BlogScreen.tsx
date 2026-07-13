@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Plus, Newspaper } from "lucide-react";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { toast } from "sonner";
 import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { ImagePicker } from "@/components/forms/ImagePicker";
 import {
   Dialog,
   DialogContent,
@@ -202,7 +203,19 @@ function BlogDialog({
             <FormInput label="Category" {...form.register("category", { required: true })} />
           </div>
           <FormInput label="Excerpt" {...form.register("excerpt", { required: true })} />
-          <FormInput label="Cover image URL" {...form.register("cover", { required: true })} />
+          <div className="space-y-1">
+            <Controller
+              control={form.control}
+              name="cover"
+              rules={{ required: true }}
+              render={({ field, fieldState }) => (
+                <>
+                  <ImagePicker label="Cover Image" value={field.value ? [field.value] : []} onChange={(urls) => field.onChange(urls[0] || "")} />
+                  {fieldState.error && <p className="text-xs text-red-500">{fieldState.error.message}</p>}
+                </>
+              )}
+            />
+          </div>
           <div className="grid grid-cols-3 gap-3">
             <FormInput label="Author" {...form.register("author", { required: true })} />
             <FormInput label="Read time" placeholder="5 min read" {...form.register("readTime", { required: true })} />

@@ -6,6 +6,7 @@ import { DashboardHeader } from "./DashboardHeader";
 import { useUIStore } from "@/store/ui-store";
 import { RouteFallback } from "@/routes/RouteFallback";
 import { ErrorBoundary } from "@/routes/ErrorBoundary";
+import { HelpDrawer } from "@/components/shared/HelpDrawer";
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -42,6 +43,7 @@ export function DashboardLayout() {
           </main>
         </div>
       </div>
+      <HelpDrawer />
     </div>
   );
 }

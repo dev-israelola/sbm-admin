@@ -86,6 +86,9 @@ const ConsultantConsultationsPage = lazy(() => conMod().then((m) => ({ default: 
 const ConsultantConsultationDetailPage = lazy(() => conMod().then((m) => ({ default: m.ConsultantConsultationDetailPage })));
 const ConsultantProductsPage = lazy(() => conMod().then((m) => ({ default: m.ConsultantProductsPage })));
 
+// shared
+const KnowledgeBasePage = lazy(() => import("@/pages/shared/KnowledgeBasePage").then((m) => ({ default: m.KnowledgeBasePage })));
+
 export function AppRoutes() {
   return (
     <Routes>
@@ -135,6 +138,7 @@ export function AppRoutes() {
             <Route path="reports" element={<AdminReportsPage />} />
             <Route path="team" element={<AdminTeamPage />} />
             <Route path="settings" element={<AdminSettingsPage />} />
+            <Route path="guides" element={<KnowledgeBasePage />} />
           </Route>
         </Route>
 
@@ -153,6 +157,7 @@ export function AppRoutes() {
             <Route path="refunds/:id" element={<ManagerRefundDetailPage />} />
             <Route path="reports" element={<ManagerReportsPage />} />
             <Route path="team" element={<ManagerTeamPage />} />
+            <Route path="guides" element={<KnowledgeBasePage />} />
           </Route>
         </Route>
 
@@ -167,6 +172,7 @@ export function AppRoutes() {
             <Route path="reconciliation" element={<AccountantReconciliationPage />} />
             <Route path="profit-loss" element={<AccountantProfitLossPage />} />
             <Route path="reports" element={<AccountantReportsPage />} />
+            <Route path="guides" element={<KnowledgeBasePage />} />
           </Route>
         </Route>
 
@@ -176,6 +182,7 @@ export function AppRoutes() {
             <Route index element={<DeliveryDashboardPage />} />
             <Route path="assignments" element={<AssignmentsPage />} />
             <Route path="assignments/:id" element={<AssignmentDetailPage />} />
+            <Route path="guides" element={<KnowledgeBasePage />} />
           </Route>
         </Route>
 
@@ -186,6 +193,7 @@ export function AppRoutes() {
             <Route path="consultations" element={<ConsultantConsultationsPage />} />
             <Route path="consultations/:id" element={<ConsultantConsultationDetailPage />} />
             <Route path="products" element={<ConsultantProductsPage />} />
+            <Route path="guides" element={<KnowledgeBasePage />} />
           </Route>
         </Route>
       </Route>

@@ -1,4 +1,4 @@
-import { Bell, LogOut, Menu, Search } from "lucide-react";
+import { Bell, LogOut, Menu, Search, HelpCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {
   useMarkAllNotificationsRead,
@@ -91,6 +91,14 @@ export function DashboardHeader() {
 
       <div className="ml-auto flex min-w-0 items-center gap-2">
         <PlatformSwitcher />
+        <button
+          type="button"
+          onClick={() => useUIStore.getState().setHelpDrawerOpen(true)}
+          className="grid place-items-center h-9 w-9 rounded-md text-ink hover:bg-surface-muted focus-visible:outline-none"
+          title="Help & Knowledge Base"
+        >
+          <HelpCircle className="h-4 w-4" />
+        </button>
         <DropdownMenu>
           <DropdownMenuTrigger
             aria-label="Notifications"

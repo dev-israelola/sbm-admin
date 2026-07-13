@@ -1,4 +1,5 @@
 import { NavLink } from "react-router-dom";
+import { BookOpen } from "lucide-react";
 import { Logo } from "./Logo";
 import { NAV_BY_ROLE } from "./navigation";
 import { useAuthStore } from "@/store/auth-store";
@@ -116,6 +117,24 @@ export function DashboardSidebar({ className, onItemClick }: DashboardSidebarPro
           </div>
         ))}
       </nav>
+
+      <div className="px-3 py-2">
+        <NavLink
+          to="/admin/guides"
+          onClick={onItemClick}
+          className={({ isActive }) =>
+            cn(
+              "flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-[13px] font-medium transition-colors",
+              isActive
+                ? "bg-accent/10 text-accent"
+                : "text-ink-muted hover:text-ink hover:bg-surface-muted/70",
+            )
+          }
+        >
+          <BookOpen className="h-4 w-4 shrink-0" />
+          Knowledge Base (KB)
+        </NavLink>
+      </div>
 
       <div className="px-5 py-3 border-t border-line/70 text-[11px] text-ink-muted leading-tight">
         <p className="font-medium text-ink">{PLATFORM_SHORT_LABEL[activePlatform]} operations</p>

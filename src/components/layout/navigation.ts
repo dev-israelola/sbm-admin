@@ -20,6 +20,7 @@ import {
   Sparkles,
   Ticket,
   Truck,
+  Tags,
   Users,
   Warehouse,
   type LucideIcon,
@@ -54,6 +55,7 @@ export const NAV_BY_ROLE: Record<Role, NavSection[]> = {
       title: "Catalog",
       items: [
         { to: "/admin/products", label: "Products", icon: Package },
+        { to: "/admin/categories", label: "Categories", icon: Tags },
         { to: "/admin/inventory", label: "Inventory", icon: Warehouse, badgeKey: "lowStock" },
         { to: "/admin/customers", label: "Customers", icon: Users },
         { to: "/admin/blog", label: "Journal", icon: Newspaper },

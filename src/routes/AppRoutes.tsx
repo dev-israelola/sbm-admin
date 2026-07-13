@@ -26,6 +26,9 @@ const AdminMovementsPage = lazy(() => adminMod().then((m) => ({ default: m.Admin
 const AdminProductsPage = lazy(() => adminMod().then((m) => ({ default: m.AdminProductsPage })));
 const AdminProductNewPage = lazy(() => adminMod().then((m) => ({ default: m.AdminProductNewPage })));
 const AdminProductEditPage = lazy(() => adminMod().then((m) => ({ default: m.AdminProductEditPage })));
+const AdminCategoriesPage = lazy(() => adminMod().then((m) => ({ default: m.AdminCategoriesPage })));
+const AdminCategoryNewPage = lazy(() => adminMod().then((m) => ({ default: m.AdminCategoryNewPage })));
+const AdminCategoryEditPage = lazy(() => adminMod().then((m) => ({ default: m.AdminCategoryEditPage })));
 const AdminDeliveryPage = lazy(() => adminMod().then((m) => ({ default: m.AdminDeliveryPage })));
 const AdminDeliveryDetailPage = lazy(() => adminMod().then((m) => ({ default: m.AdminDeliveryDetailPage })));
 const AdminConsultationsPage = lazy(() => adminMod().then((m) => ({ default: m.AdminConsultationsPage })));
@@ -108,6 +111,9 @@ export function AppRoutes() {
             <Route path="products" element={<AdminProductsPage />} />
             <Route path="products/new" element={<AdminProductNewPage />} />
             <Route path="products/:id/edit" element={<AdminProductEditPage />} />
+            <Route path="categories" element={<AdminCategoriesPage />} />
+            <Route path="categories/new" element={<AdminCategoryNewPage />} />
+            <Route path="categories/:id/edit" element={<AdminCategoryEditPage />} />
             <Route path="delivery" element={<AdminDeliveryPage />} />
             <Route path="delivery/:id" element={<AdminDeliveryDetailPage />} />
             <Route path="pickup-handoffs" element={<Navigate to="/admin/delivery?tab=handoffs" replace />} />

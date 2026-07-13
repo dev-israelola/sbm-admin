@@ -12,6 +12,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { AddStaffDialog } from "@/components/staff/AddStaffDialog";
 import { EditStaffDialog } from "@/components/staff/EditStaffDialog";
 import { RolesTable } from "@/components/staff/RolesTable";
@@ -31,6 +32,7 @@ export function StaffScreen() {
   const { data, isLoading } = useStaff({ q, page, limit: DEFAULT_PAGE_SIZE });
   const [adding, setAdding] = useState(false);
   const [editingUser, setEditingUser] = useState<StaffUser | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<StaffUser | null>(null);
 
   const currentUser = useAuthStore((s) => s.user);
   const isSuperAdmin = currentUser?.role === "admin";
@@ -47,14 +49,14 @@ export function StaffScreen() {
     }
   };
 
-  const handleDelete = async (user: StaffUser) => {
-    if (confirm(`Are you sure you want to completely remove ${user.fullName}?`)) {
-      try {
-        await deleteUser.mutateAsync(user.id);
-        toast.success("Staff profile permanently removed.");
-      } catch (e: any) {
-        toast.error(e.message || "Failed to delete user");
-      }
+  const commitDelete = async () => {
+    if (!deleteTarget) return;
+    try {
+      await deleteUser.mutateAsync(deleteTarget.id);
+      toast.success("Staff profile permanently removed.");
+      setDeleteTarget(null);
+    } catch (e: any) {
+      toast.error(e.message || "Failed to delete user");
     }
   };
 
@@ -98,7 +100,7 @@ export function StaffScreen() {
                 <ShieldOff className="mr-2 h-4 w-4" /> {u.active ? 'Revoke Access' : 'Restore Access'}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-red-500 hover:text-red-600 focus:text-red-600 focus:bg-red-50" onClick={() => handleDelete(u)}>
+              <DropdownMenuItem className="text-red-500 hover:text-red-600 focus:text-red-600 focus:bg-red-50" onClick={() => setDeleteTarget(u)}>
                 <Trash className="mr-2 h-4 w-4" /> Delete Member
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -159,6 +161,16 @@ export function StaffScreen() {
 
       <AddStaffDialog open={adding} onOpenChange={setAdding} />
       <EditStaffDialog open={!!editingUser} onOpenChange={(val) => !val && setEditingUser(null)} userToEdit={editingUser} />
+      
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={(v) => !v && setDeleteTarget(null)}
+        title={deleteTarget ? `Remove ${deleteTarget.fullName}?` : "Remove Staff"}
+        description="This will permanently delete their account and revoke all system access. This action cannot be undone."
+        confirmLabel="Remove Member"
+        destructive
+        onConfirm={commitDelete}
+      />
     </div>
   );
 }

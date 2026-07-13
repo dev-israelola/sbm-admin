@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { Package, Plus } from "lucide-react";
+import { Package, Plus, Edit } from "lucide-react";
 import { FilterBar } from "@/components/ui/filter-bar";
 import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -43,9 +43,9 @@ export function ProductsScreen({ rolePath }: { rolePath: string }) {
       {
         key: "img",
         header: "",
-        width: "48px",
+        width: "64px",
         render: (p) => (
-          <img src={p.images[0]} alt="" className="h-9 w-9 rounded-md object-cover bg-surface-muted" loading="lazy" />
+          <img src={p.images[0]} alt="" className="h-12 w-12 rounded-md object-cover border border-line bg-surface-muted" loading="lazy" />
         ),
       },
       {
@@ -73,6 +73,18 @@ export function ProductsScreen({ rolePath }: { rolePath: string }) {
         ),
       },
       { key: "date", header: "Added", align: "right", render: (p) => <span className="data-muted">{formatDate(p.createdAt)}</span> },
+      {
+        key: "actions",
+        header: "",
+        align: "right",
+        render: (p) => (
+          <Button variant="ghost" size="sm" asChild className="h-8 w-8 p-0 text-ink-muted hover:text-ink">
+            <Link to={`${rolePath}/products/${p.id}/edit`}>
+              <Edit className="h-4 w-4" />
+            </Link>
+          </Button>
+        ),
+      },
     ],
     [rolePath],
   );

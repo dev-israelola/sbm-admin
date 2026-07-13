@@ -25,7 +25,7 @@ export function InventoryScreen({ rolePath }: { rolePath: string }) {
       header: "Product",
       render: (p) => (
         <div className="flex items-center gap-3">
-          <div className="h-10 w-10 shrink-0 overflow-hidden rounded-md border border-line bg-surface-muted">
+          <div className="h-12 w-12 shrink-0 overflow-hidden rounded-md border border-line bg-surface-muted">
             {p.images?.[0] ? (
               <img src={p.images[0]} alt={p.name} className="h-full w-full object-cover" loading="lazy" />
             ) : (

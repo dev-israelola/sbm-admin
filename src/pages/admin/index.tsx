@@ -8,6 +8,8 @@ import { InventoryScreen } from "@/components/shared/InventoryScreen";
 import { InventoryMovementsScreen } from "@/components/shared/InventoryMovementsScreen";
 import { ProductsScreen } from "@/components/shared/ProductsScreen";
 import { ProductFormScreen } from "@/components/shared/ProductFormScreen";
+import { CategoriesScreen } from "@/components/shared/CategoriesScreen";
+import { CategoryFormScreen } from "@/components/shared/CategoryFormScreen";
 import { DeliveryOperationsScreen } from "@/components/shared/DeliveryOperationsScreen";
 import { DeliveryDetailScreen } from "@/components/shared/DeliveryDetailScreen";
 import { PickupHandoffsScreen } from "@/components/shared/PickupHandoffsScreen";
@@ -42,6 +44,9 @@ export function AdminMovementsPage() { return <InventoryMovementsScreen rolePath
 export function AdminProductsPage() { return <ProductsScreen rolePath={PATH} />; }
 export function AdminProductNewPage() { return <ProductFormScreen rolePath={PATH} mode="new" />; }
 export function AdminProductEditPage() { return <ProductFormScreen rolePath={PATH} mode="edit" />; }
+export function AdminCategoriesPage() { return <CategoriesScreen rolePath={PATH} />; }
+export function AdminCategoryNewPage() { return <CategoryFormScreen rolePath={PATH} mode="new" />; }
+export function AdminCategoryEditPage() { return <CategoryFormScreen rolePath={PATH} mode="edit" />; }
 export function AdminDeliveryPage() { return <DeliveryOperationsScreen rolePath={PATH} />; }
 export function AdminDeliveryDetailPage() { return <DeliveryDetailScreen rolePath={PATH} />; }
 export function AdminPickupHandoffsPage() { return <PickupHandoffsScreen rolePath={PATH} />; }

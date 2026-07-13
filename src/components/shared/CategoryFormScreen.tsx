@@ -141,7 +141,7 @@ export function CategoryFormScreen({ rolePath, mode }: { rolePath: string; mode:
               name="image"
               render={({ field, fieldState }) => (
                 <div className="space-y-1">
-                  <ImagePicker value={field.value ? [field.value] : []} onChange={(urls) => field.onChange(urls[0] || "")} maxFiles={1} />
+                  <ImagePicker label="Category Image" value={field.value ? [field.value] : []} onChange={(urls) => field.onChange(urls[0] || "")} />
                   {fieldState.error && <p className="text-xs text-red-500">{fieldState.error.message}</p>}
                 </div>
               )}

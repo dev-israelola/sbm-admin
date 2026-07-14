@@ -120,7 +120,7 @@ export function DashboardSidebar({ className, onItemClick }: DashboardSidebarPro
 
       <div className="px-3 py-2">
         <NavLink
-          to="/admin/guides"
+          to={`/${user.role}/guides`}
           onClick={onItemClick}
           className={({ isActive }) =>
             cn(

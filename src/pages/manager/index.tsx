@@ -11,6 +11,8 @@ import { PickupHandoffsScreen } from "@/components/shared/PickupHandoffsScreen";
 import { ReportsScreen } from "@/components/shared/ReportsScreen";
 import { StaffScreen } from "@/components/shared/StaffScreen";
 
+import { ReviewsScreen } from "@/components/shared/ReviewsScreen";
+
 const PATH = "/manager";
 
 export function ManagerOverviewPage() { return <AdminOverview roleScope="manager" />; }
@@ -25,3 +27,4 @@ export function ManagerPickupHandoffsPage() { return <PickupHandoffsScreen roleP
 export function ManagerRefundsPage() { return <RefundsScreen rolePath={PATH} />; }
 export function ManagerRefundDetailPage() { return <RefundDetailScreen rolePath={PATH} />; }
 export function ManagerReportsPage() { return <ReportsScreen />; }
+export function ManagerReviewsPage() { return <ReviewsScreen rolePath={PATH} />; }

@@ -50,6 +50,7 @@ const AdminReportsPage = lazy(() => adminMod().then((m) => ({ default: m.AdminRe
 const AdminSettingsPage = lazy(() => adminMod().then((m) => ({ default: m.AdminSettingsPage })));
 const AdminTeamPage = lazy(() => adminMod().then((m) => ({ default: m.AdminTeamPage })));
 const AdminAuditLogsPage = lazy(() => adminMod().then((m) => ({ default: m.AdminAuditLogsPage })));
+const AdminReviewsPage = lazy(() => adminMod().then((m) => ({ default: m.AdminReviewsPage })));
 
 // manager
 const mgrMod = () => import("@/pages/manager");
@@ -64,6 +65,7 @@ const ManagerRefundsPage = lazy(() => mgrMod().then((m) => ({ default: m.Manager
 const ManagerRefundDetailPage = lazy(() => mgrMod().then((m) => ({ default: m.ManagerRefundDetailPage })));
 const ManagerReportsPage = lazy(() => mgrMod().then((m) => ({ default: m.ManagerReportsPage })));
 const ManagerTeamPage = lazy(() => mgrMod().then((m) => ({ default: m.ManagerTeamPage })));
+const ManagerReviewsPage = lazy(() => mgrMod().then((m) => ({ default: m.ManagerReviewsPage })));
 
 // accountant
 const accMod = () => import("@/pages/accountant");
@@ -116,6 +118,7 @@ export function AppRoutes() {
             <Route path="products" element={<AdminProductsPage />} />
             <Route path="products/new" element={<AdminProductNewPage />} />
             <Route path="products/:id/edit" element={<AdminProductEditPage />} />
+            <Route path="reviews" element={<AdminReviewsPage />} />
             <Route path="categories" element={<AdminCategoriesPage />} />
             <Route path="categories/new" element={<AdminCategoryNewPage />} />
             <Route path="categories/:slug/edit" element={<AdminCategoryEditPage />} />
@@ -154,6 +157,7 @@ export function AppRoutes() {
             <Route path="orders/:id" element={<ManagerOrderDetailPage />} />
             <Route path="inventory" element={<ManagerInventoryPage />} />
             <Route path="inventory/movements" element={<ManagerMovementsPage />} />
+            <Route path="reviews" element={<ManagerReviewsPage />} />
             <Route path="delivery" element={<ManagerDeliveryPage />} />
             <Route path="delivery/:id" element={<ManagerDeliveryDetailPage />} />
             <Route path="pickup-handoffs" element={<Navigate to="/manager/delivery?tab=handoffs" replace />} />

@@ -20,6 +20,7 @@ import {
   Settings,
   ShoppingBag,
   Sparkles,
+  Star,
   Ticket,
   Truck,
   Tags,
@@ -60,6 +61,7 @@ export const NAV_BY_ROLE: Record<Role, NavSection[]> = {
         { to: "/admin/categories", label: "Categories", icon: Tags },
         { to: "/admin/inventory", label: "Inventory", icon: Warehouse, badgeKey: "lowStock" },
         { to: "/admin/customers", label: "Customers", icon: Users },
+        { to: "/admin/reviews", label: "Reviews", icon: Star },
         { to: "/admin/blog", label: "Journal", icon: Newspaper },
       ],
     },
@@ -96,6 +98,7 @@ export const NAV_BY_ROLE: Record<Role, NavSection[]> = {
       items: [
         { to: "/manager/orders", label: "Orders", icon: ShoppingBag, badgeKey: "pendingOrders" },
         { to: "/manager/inventory", label: "Inventory", icon: Warehouse, badgeKey: "lowStock" },
+        { to: "/manager/reviews", label: "Reviews", icon: Star },
         { to: "/manager/delivery", label: "Delivery", icon: Truck, badgeKey: "pendingPickup" },
         { to: "/manager/refunds", label: "Refunds", icon: RotateCcw, badgeKey: "pendingRefunds" },
         { to: "/manager/reports", label: "Reports", icon: FileText },

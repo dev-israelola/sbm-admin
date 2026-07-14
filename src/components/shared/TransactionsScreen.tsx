@@ -17,7 +17,6 @@ export function TransactionsScreen() {
   const [dateTo, setDateTo] = useState<string | undefined>();
   
   const { data, isLoading } = useAllTransactions({ page, dateFrom, dateTo, limit: DEFAULT_PAGE_SIZE });
-  if (data?.items?.length > 0) { console.log('DEBUG:', data.items[0]); }
 
   const columns: DataTableColumn<any>[] = [
     { key: "date", header: "Date", render: (r) => <span className="text-[12px] text-ink-muted">{formatDate(r.occurredAt)}</span> },

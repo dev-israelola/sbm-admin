@@ -5,6 +5,7 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { Badge } from "@/components/ui/badge";
 import { MoneyDisplay } from "@/components/ui/money";
 import { ReportExportControls } from "@/components/reports/ReportExportControls";
+import { DateRangeFilter } from "@/components/shared/DateRangeFilter";
 import { useSales } from "@/features/accounting/useAccounting";
 import { PaginationFooter } from "@/components/ui/pagination-footer";
 import { DEFAULT_PAGE_SIZE } from "@/lib/pagination";
@@ -13,7 +14,9 @@ import type { SalesRecord } from "@/types/accounting";
 
 export function SalesRecordsScreen() {
   const [page, setPage] = useState(1);
-  const { data, isLoading } = useSales({ page, limit: DEFAULT_PAGE_SIZE });
+  const [dateFrom, setDateFrom] = useState<string | undefined>();
+  const [dateTo, setDateTo] = useState<string | undefined>();
+  const { data, isLoading } = useSales({ page, dateFrom, dateTo, limit: DEFAULT_PAGE_SIZE });
 
   const columns: DataTableColumn<SalesRecord>[] = [
     { key: "no", header: "Order", render: (r) => <span className="text-[13px] font-medium text-ink">{r.orderNumber}</span> },
@@ -46,6 +49,16 @@ export function SalesRecordsScreen() {
         description="Every order that has cleared the basic stages."
         actions={<ReportExportControls reportId="sales" title="Sales report" />}
       />
+      <div className="mb-4 flex items-center justify-between bg-surface/50 border border-line rounded-xl p-2 px-3">
+        <DateRangeFilter
+          defaultPreset="30d"
+          onRangeChange={(range) => {
+            setDateFrom(range.dateFrom);
+            setDateTo(range.dateTo);
+            setPage(1);
+          }}
+        />
+      </div>
       <DataTable
         rows={data?.items}
         columns={columns}

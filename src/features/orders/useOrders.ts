@@ -11,6 +11,8 @@ export interface OrdersParams {
   status?: string;
   paymentMethod?: string;
   deliveryMethod?: string;
+  dateFrom?: string;
+  dateTo?: string;
   page?: number;
   limit?: number;
 }
@@ -29,6 +31,8 @@ export function useOrders(params: OrdersParams = {}) {
       if (params.status) search.set("status", toBackendOrderStatus(params.status as OrderStatus));
       if (params.paymentMethod) search.set("paymentMethod", toBackendPaymentMethod(params.paymentMethod as PaymentMethod));
       if (params.deliveryMethod) search.set("deliveryMethod", toBackendDeliveryMethod(params.deliveryMethod as DeliveryMethod));
+      if (params.dateFrom) search.set("dateFrom", params.dateFrom);
+      if (params.dateTo) search.set("dateTo", params.dateTo);
       const { data } = await api.get<{ items?: unknown[]; meta?: any; total?: number } | unknown[]>(
         `/admin/orders?${search.toString()}`,
       );

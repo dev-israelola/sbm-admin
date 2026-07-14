@@ -30,6 +30,8 @@ import { ProfitLossScreen } from "@/components/shared/ProfitLossScreen";
 import { ReportsScreen } from "@/components/shared/ReportsScreen";
 import { SettingsScreen } from "@/components/shared/SettingsScreen";
 import { StaffScreen } from "@/components/shared/StaffScreen";
+import { AuditLogsScreen } from "@/components/shared/AuditLogsScreen";
+import { TransactionsScreen } from "@/components/shared/TransactionsScreen";
 
 const PATH = "/admin";
 
@@ -60,6 +62,7 @@ export function AdminCustomersPage() { return <CustomersScreen />; }
 export function AdminRewardsPage() { return <RewardsScreen />; }
 export function AdminCouponsPage() { return <CouponsScreen />; }
 export function AdminAccountingOverviewPage() { return <AccountingOverview />; }
+export function AdminAccountingTransactionsPage() { return <TransactionsScreen />; }
 export function AdminAccountingSalesPage() { return <SalesRecordsScreen />; }
 export function AdminAccountingExpensesPage() { return <ExpensesScreen />; }
 export function AdminAccountingRefundsPage() { return <RefundsScreen rolePath={PATH} />; }
@@ -67,3 +70,4 @@ export function AdminAccountingReconciliationPage() { return <ReconciliationScre
 export function AdminAccountingProfitLossPage() { return <ProfitLossScreen />; }
 export function AdminReportsPage() { return <ReportsScreen />; }
 export function AdminSettingsPage() { return <SettingsScreen />; }
+export function AdminAuditLogsPage() { return <AuditLogsScreen />; }

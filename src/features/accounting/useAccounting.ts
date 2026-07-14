@@ -138,16 +138,36 @@ export function useProfitLossReport(range: ReportRange = "30d") {
   });
 }
 
-export function useSales(params: { page?: number; limit?: number } = {}) {
+export function useAllTransactions(params: { page?: number; limit?: number; dateFrom?: string; dateTo?: string } = {}) {
+  const activePlatform = useAuthStore((s) => s.activePlatform);
+  const page = params.page ?? 1;
+  const limit = params.limit ?? DEFAULT_PAGE_SIZE;
+  return useQuery({
+    queryKey: qk.accountingSummary(activePlatform).concat(["transactions", params] as any),
+    queryFn: async () => {
+      const search = new URLSearchParams();
+      search.set("page", String(page));
+      search.set("limit", String(limit));
+      if (params.dateFrom) search.set("dateFrom", params.dateFrom);
+      if (params.dateTo) search.set("dateTo", params.dateTo);
+      const { data } = await api.get<any>(`/accounting/transactions?${search.toString()}`);
+      return paginated(data, page, limit);
+    },
+  });
+}
+
+export function useSales(params: { page?: number; limit?: number; dateFrom?: string; dateTo?: string } = {}) {
   const activePlatform = useAuthStore((s) => s.activePlatform);
   const page = params.page ?? 1;
   const limit = params.limit ?? DEFAULT_PAGE_SIZE;
   return useQuery({
     queryKey: qk.sales(activePlatform, params),
     queryFn: async () => {
-      const search = reportRangeParams("30d");
+      const search = new URLSearchParams();
       search.set("page", String(page));
       search.set("limit", String(limit));
+      if (params.dateFrom) search.set("dateFrom", params.dateFrom);
+      if (params.dateTo) search.set("dateTo", params.dateTo);
       const { data } = await api.get<unknown[] | { items?: unknown[]; meta?: any }>(`/reports/sales?${search.toString()}`);
       const result = paginated(data, page, limit);
       return {

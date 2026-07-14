@@ -41,4 +41,5 @@ export const qk = {
   reports: (platform: Platform, type?: string) => ["reports", platform, type ?? "all"] as const,
   users: (platform: Platform, params?: unknown) => ["users", platform, params ?? {}] as const,
   notifications: (platform: Platform) => ["notifications", platform] as const,
+  auditLogs: (platform: Platform, params?: unknown) => ["audit-logs", platform, params ?? {}] as const,
 };

@@ -198,7 +198,7 @@ export function useStaff(paramsOrEnabled: { q?: string; page?: number; limit?: n
   });
 }
 
-export function useCustomers(params: { q?: string; page?: number; limit?: number } = {}) {
+export function useCustomers(params: { q?: string; page?: number; limit?: number; dateFrom?: string; dateTo?: string } = {}) {
   const activePlatform = useAuthStore((s) => s.activePlatform);
   const page = params.page ?? 1;
   const limit = params.limit ?? DEFAULT_PAGE_SIZE;
@@ -207,6 +207,8 @@ export function useCustomers(params: { q?: string; page?: number; limit?: number
     queryFn: async () => {
       const search = new URLSearchParams({ role: "CUSTOMER", page: String(page), limit: String(limit) });
       if (params.q?.trim()) search.set("search", params.q.trim());
+      if (params.dateFrom) search.set("dateFrom", params.dateFrom);
+      if (params.dateTo) search.set("dateTo", params.dateTo);
       const { data } = await api.get<unknown[] | { items?: unknown[]; meta?: any }>(`/users?${search.toString()}`);
       const result = paginated(data, page, limit);
       return {

@@ -40,6 +40,7 @@ const AdminCustomersPage = lazy(() => adminMod().then((m) => ({ default: m.Admin
 const AdminRewardsPage = lazy(() => adminMod().then((m) => ({ default: m.AdminRewardsPage })));
 const AdminCouponsPage = lazy(() => adminMod().then((m) => ({ default: m.AdminCouponsPage })));
 const AdminAccountingOverviewPage = lazy(() => adminMod().then((m) => ({ default: m.AdminAccountingOverviewPage })));
+const AdminAccountingTransactionsPage = lazy(() => adminMod().then((m) => ({ default: m.AdminAccountingTransactionsPage })));
 const AdminAccountingSalesPage = lazy(() => adminMod().then((m) => ({ default: m.AdminAccountingSalesPage })));
 const AdminAccountingExpensesPage = lazy(() => adminMod().then((m) => ({ default: m.AdminAccountingExpensesPage })));
 const AdminAccountingRefundsPage = lazy(() => adminMod().then((m) => ({ default: m.AdminAccountingRefundsPage })));
@@ -48,6 +49,7 @@ const AdminAccountingProfitLossPage = lazy(() => adminMod().then((m) => ({ defau
 const AdminReportsPage = lazy(() => adminMod().then((m) => ({ default: m.AdminReportsPage })));
 const AdminSettingsPage = lazy(() => adminMod().then((m) => ({ default: m.AdminSettingsPage })));
 const AdminTeamPage = lazy(() => adminMod().then((m) => ({ default: m.AdminTeamPage })));
+const AdminAuditLogsPage = lazy(() => adminMod().then((m) => ({ default: m.AdminAuditLogsPage })));
 
 // manager
 const mgrMod = () => import("@/pages/manager");
@@ -116,7 +118,7 @@ export function AppRoutes() {
             <Route path="products/:id/edit" element={<AdminProductEditPage />} />
             <Route path="categories" element={<AdminCategoriesPage />} />
             <Route path="categories/new" element={<AdminCategoryNewPage />} />
-            <Route path="categories/:id/edit" element={<AdminCategoryEditPage />} />
+            <Route path="categories/:slug/edit" element={<AdminCategoryEditPage />} />
             <Route path="delivery" element={<AdminDeliveryPage />} />
             <Route path="delivery/:id" element={<AdminDeliveryDetailPage />} />
             <Route path="pickup-handoffs" element={<Navigate to="/admin/delivery?tab=handoffs" replace />} />
@@ -130,6 +132,7 @@ export function AppRoutes() {
             <Route path="rewards" element={<AdminRewardsPage />} />
             <Route path="coupons" element={<AdminCouponsPage />} />
             <Route path="accounting" element={<AdminAccountingOverviewPage />} />
+            <Route path="accounting/transactions" element={<AdminAccountingTransactionsPage />} />
             <Route path="accounting/sales" element={<AdminAccountingSalesPage />} />
             <Route path="accounting/expenses" element={<AdminAccountingExpensesPage />} />
             <Route path="accounting/refunds" element={<AdminAccountingRefundsPage />} />
@@ -138,6 +141,7 @@ export function AppRoutes() {
             <Route path="reports" element={<AdminReportsPage />} />
             <Route path="team" element={<AdminTeamPage />} />
             <Route path="settings" element={<AdminSettingsPage />} />
+            <Route path="audit-logs" element={<AdminAuditLogsPage />} />
             <Route path="guides" element={<KnowledgeBasePage />} />
           </Route>
         </Route>

@@ -4,6 +4,7 @@ import { FilterBar } from "@/components/ui/filter-bar";
 import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { MoneyDisplay } from "@/components/ui/money";
+import { DateRangeFilter } from "@/components/shared/DateRangeFilter";
 import { useCustomers } from "@/features/auth/useAuth";
 import { PaginationFooter } from "@/components/ui/pagination-footer";
 import { DEFAULT_PAGE_SIZE } from "@/lib/pagination";
@@ -13,7 +14,10 @@ import type { Customer } from "@/types/user";
 export function CustomersScreen() {
   const [q, setQ] = useState("");
   const [page, setPage] = useState(1);
-  const { data, isLoading } = useCustomers({ q, page, limit: DEFAULT_PAGE_SIZE });
+  const [dateFrom, setDateFrom] = useState<string | undefined>();
+  const [dateTo, setDateTo] = useState<string | undefined>();
+
+  const { data, isLoading } = useCustomers({ q, dateFrom, dateTo, page, limit: DEFAULT_PAGE_SIZE });
 
   const columns: DataTableColumn<Customer>[] = [
     {
@@ -44,7 +48,15 @@ export function CustomersScreen() {
         }}
         searchPlaceholder="Search name or email…"
         className="mb-4"
-      />
+      >
+        <DateRangeFilter
+          onRangeChange={(range) => {
+            setDateFrom(range.dateFrom);
+            setDateTo(range.dateTo);
+            setPage(1);
+          }}
+        />
+      </FilterBar>
       <DataTable
         rows={data?.items}
         columns={columns}

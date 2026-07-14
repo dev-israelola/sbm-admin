@@ -14,6 +14,7 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { OrderStatusBadge, PaymentStatusBadge } from "@/components/orders/status-badges";
 import { MoneyDisplay } from "@/components/ui/money";
 import { Badge } from "@/components/ui/badge";
+import { DateRangeFilter } from "@/components/shared/DateRangeFilter";
 import { useOrders } from "@/features/orders/useOrders";
 import { PaginationFooter } from "@/components/ui/pagination-footer";
 import { DEFAULT_PAGE_SIZE } from "@/lib/pagination";
@@ -44,6 +45,8 @@ export function OrdersScreen({
   const [status, setStatus] = useState<string>(urlStatus ?? defaultStatus ?? "all");
   const [paymentMethod, setPaymentMethod] = useState<string>("all");
   const [deliveryMethod, setDeliveryMethod] = useState<string>("all");
+  const [dateFrom, setDateFrom] = useState<string | undefined>();
+  const [dateTo, setDateTo] = useState<string | undefined>();
   const [page, setPage] = useState(1);
 
   const { data, isLoading } = useOrders({
@@ -51,13 +54,15 @@ export function OrdersScreen({
     status: status === "all" ? undefined : status,
     paymentMethod: paymentMethod === "all" ? undefined : paymentMethod,
     deliveryMethod: deliveryMethod === "all" ? undefined : deliveryMethod,
+    dateFrom,
+    dateTo,
     page,
     limit: DEFAULT_PAGE_SIZE,
   });
 
   useEffect(() => {
     setPage(1);
-  }, [q, status, paymentMethod, deliveryMethod]);
+  }, [q, status, paymentMethod, deliveryMethod, dateFrom, dateTo]);
 
   const columns: DataTableColumn<AdminOrder>[] = useMemo(
     () => [
@@ -159,6 +164,12 @@ export function OrdersScreen({
             <SelectItem value="pickup">Pickup station</SelectItem>
           </SelectContent>
         </Select>
+        <DateRangeFilter
+          onRangeChange={(range) => {
+            setDateFrom(range.dateFrom);
+            setDateTo(range.dateTo);
+          }}
+        />
       </FilterBar>
 
       <p className="text-[12px] text-ink-muted mb-3">

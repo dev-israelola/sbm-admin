@@ -7,6 +7,7 @@ import { ReportExportControls } from "@/components/reports/ReportExportControls"
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
+import { DateRangeFilter } from "@/components/shared/DateRangeFilter";
 import {
   presetToDates,
   type DateRange,
@@ -114,23 +115,10 @@ function ReportCard({ report, range }: { report: (typeof REPORTS)[number]; range
 }
 
 export function ReportsScreen() {
-  const [range, setRange] = useState<ReportRange>("30d");
-  const [customFrom, setCustomFrom] = useState("");
-  const [customTo, setCustomTo] = useState("");
-
-  const usingCustom = !!customFrom && !!customTo;
-  // Custom dates win; "to" covers the whole selected day.
-  const effective: DateRange = usingCustom
-    ? { dateFrom: new Date(`${customFrom}T00:00:00`).toISOString(), dateTo: new Date(`${customTo}T23:59:59`).toISOString() }
-    : presetToDates(range);
+  const [effective, setEffective] = useState<DateRange>(presetToDates("30d"));
 
   const fromLabel = new Date(effective.dateFrom).toLocaleDateString("en-NG");
   const toLabel = new Date(effective.dateTo).toLocaleDateString("en-NG");
-
-  function clearCustom() {
-    setCustomFrom("");
-    setCustomTo("");
-  }
 
   return (
     <div>
@@ -140,44 +128,14 @@ export function ReportsScreen() {
         description={`Live backend reports from ${fromLabel} to ${toLabel}.`}
         actions={
           <div className="flex flex-wrap items-center gap-2">
-            <Select
-              value={usingCustom ? "custom" : range}
-              onValueChange={(value) => {
-                if (value === "custom") return;
-                clearCustom();
-                setRange(value as ReportRange);
+            <DateRangeFilter
+              defaultPreset="30d"
+              onRangeChange={(range) => {
+                if (range.dateFrom && range.dateTo) {
+                  setEffective({ dateFrom: range.dateFrom, dateTo: range.dateTo });
+                }
               }}
-            >
-              <SelectTrigger className="w-36 h-9 text-[12px]"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="today">Today</SelectItem>
-                <SelectItem value="7d">Last 7 days</SelectItem>
-                <SelectItem value="30d">Last 30 days</SelectItem>
-                <SelectItem value="90d">Last 90 days</SelectItem>
-                <SelectItem value="ytd">Year to date</SelectItem>
-                {usingCustom && <SelectItem value="custom">Custom range</SelectItem>}
-              </SelectContent>
-            </Select>
-            <input
-              type="date"
-              value={customFrom}
-              max={customTo || undefined}
-              onChange={(e) => setCustomFrom(e.target.value)}
-              className="h-9 rounded-md border border-line bg-surface px-2 text-[12px] text-ink"
-              aria-label="From date"
             />
-            <span className="text-[12px] text-ink-muted">–</span>
-            <input
-              type="date"
-              value={customTo}
-              min={customFrom || undefined}
-              onChange={(e) => setCustomTo(e.target.value)}
-              className="h-9 rounded-md border border-line bg-surface px-2 text-[12px] text-ink"
-              aria-label="To date"
-            />
-            {usingCustom && (
-              <Button size="xs" variant="ghost" onClick={clearCustom}>Clear</Button>
-            )}
           </div>
         }
       />

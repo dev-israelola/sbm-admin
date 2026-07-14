@@ -1,4 +1,6 @@
 import {
+  Activity,
+  ArrowRightLeft,
   BarChart3,
   Boxes,
   CalendarOff,
@@ -65,6 +67,7 @@ export const NAV_BY_ROLE: Record<Role, NavSection[]> = {
       title: "Finance",
       items: [
         { to: "/admin/accounting", label: "Accounting", icon: Calculator },
+        { to: "/admin/accounting/transactions", label: "All transactions", icon: ArrowRightLeft },
         { to: "/admin/accounting/sales", label: "Sales", icon: Receipt },
         { to: "/admin/accounting/expenses", label: "Expenses", icon: CreditCard },
         { to: "/admin/accounting/reconciliation", label: "Reconciliation", icon: ClipboardCheck },
@@ -79,6 +82,7 @@ export const NAV_BY_ROLE: Record<Role, NavSection[]> = {
         { to: "/admin/reports", label: "Reports", icon: FileText },
         { to: "/admin/team", label: "Team", icon: Users },
         { to: "/admin/settings", label: "Settings", icon: Settings },
+        { to: "/admin/audit-logs", label: "Audit logs", icon: Activity },
       ],
     },
   ],

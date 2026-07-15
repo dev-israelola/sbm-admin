@@ -73,6 +73,16 @@ export function RefundsScreen({ rolePath }: { rolePath: string }) {
     { key: "status", header: "Status", render: (r) => <RefundStatusBadge status={r.status} /> },
     { key: "reviewer", header: "Reviewer", render: (r) => <span className="data-muted">{r.assignedReviewer ?? "Unassigned"}</span> },
     { key: "date", header: "Date", align: "right", render: (r) => <span className="data-muted">{formatDate(r.createdAt)}</span> },
+    {
+      key: "actions",
+      header: "",
+      align: "right",
+      render: (r) => (
+        <Link to={`${rolePath}/refunds/${r.id}`}>
+          <Button variant="outline" size="sm" className="h-8">View</Button>
+        </Link>
+      ),
+    },
   ];
 
   return (

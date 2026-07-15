@@ -162,6 +162,7 @@ export function normalizeOrder(raw: AnyRecord): AdminOrder {
     customerEmail: raw.customerEmail ?? "",
     customerPhone: raw.customerPhone ?? "",
     items: items.map((item: AnyRecord) => ({
+      orderItemId: item.id,
       productId: item.productId ?? item.id,
       sku: item.sku ?? "",
       name: item.name ?? "",

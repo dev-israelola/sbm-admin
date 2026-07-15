@@ -18,6 +18,7 @@ import { ConsultationsScreen } from "@/components/shared/ConsultationsScreen";
 import { ConsultationDetailScreen } from "@/components/shared/ConsultationDetailScreen";
 import { ConsultationBlocksScreen } from "@/components/shared/ConsultationBlocksScreen";
 import { DeliveryTerminalsScreen } from "@/components/shared/DeliveryTerminalsScreen";
+import { HomeDeliveryZonesScreen } from "@/components/shared/HomeDeliveryZonesScreen";
 import { BlogScreen } from "@/components/shared/BlogScreen";
 import { CustomersScreen } from "@/components/shared/CustomersScreen";
 import { RewardsScreen } from "@/components/shared/RewardsScreen";
@@ -58,6 +59,7 @@ export function AdminConsultationsPage() { return <ConsultationsScreen rolePath=
 export function AdminConsultationDetailPage() { return <ConsultationDetailScreen rolePath={PATH} />; }
 export function AdminConsultationSlotsPage() { return <ConsultationBlocksScreen />; }
 export function AdminDeliveryTerminalsPage() { return <DeliveryTerminalsScreen />; }
+export function AdminHomeDeliveryZonesPage() { return <HomeDeliveryZonesScreen />; }
 export function AdminBlogPage() { return <BlogScreen />; }
 export function AdminCustomersPage() { return <CustomersScreen />; }
 export function AdminRewardsPage() { return <RewardsScreen />; }

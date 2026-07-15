@@ -43,6 +43,7 @@ export type PodCollectionStatus =
   | "discrepancy";
 
 export interface OrderItem {
+  orderItemId?: string;
   productId: string;
   sku: string;
   name: string;

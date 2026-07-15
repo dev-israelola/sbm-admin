@@ -32,6 +32,7 @@ import { PodVerificationDialog } from "@/components/orders/PodVerificationDialog
 import { PodPaymentCollectionDialog } from "@/components/orders/PodPaymentCollectionDialog";
 import { DeliveryAssignDialog } from "@/components/delivery/DeliveryAssignDialog";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { RefundInitiateDialog } from "@/components/shared/RefundInitiateDialog";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { FormInput } from "@/components/forms/FormInput";
 import { PermissionGate } from "@/components/layout/PermissionGate";
@@ -64,6 +65,7 @@ export function OrderDetailScreen({ rolePath }: Props) {
   const [assignOpen, setAssignOpen] = useState(false);
   const [collectOpen, setCollectOpen] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
+  const [refundOpen, setRefundOpen] = useState(false);
   const [reconcileOpen, setReconcileOpen] = useState<"reconciled" | "discrepancy" | null>(null);
   const [noteDraft, setNoteDraft] = useState("");
   const [transferOpen, setTransferOpen] = useState(false);
@@ -426,6 +428,12 @@ export function OrderDetailScreen({ rolePath }: Props) {
                   <X className="h-4 w-4" /> Cancel order
                 </Button>
               )}
+
+              {["payment-confirmed", "verified", "pending-fulfillment", "packed", "ready-for-dispatch", "ready-for-pickup", "in-transit", "delivered", "picked-up", "completed"].includes(order.status) && can(role, "refunds.decide") && (
+                <Button variant="outline" className="w-full" onClick={() => setRefundOpen(true)}>
+                   Admin Refund Override
+                </Button>
+              )}
             </div>
           </section>
 
@@ -504,6 +512,12 @@ export function OrderDetailScreen({ rolePath }: Props) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <RefundInitiateDialog
+        open={refundOpen}
+        onOpenChange={setRefundOpen}
+        order={order}
+      />
 
       <ConfirmDialog
         open={cancelOpen}

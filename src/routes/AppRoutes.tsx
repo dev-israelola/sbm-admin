@@ -35,6 +35,7 @@ const AdminConsultationsPage = lazy(() => adminMod().then((m) => ({ default: m.A
 const AdminConsultationDetailPage = lazy(() => adminMod().then((m) => ({ default: m.AdminConsultationDetailPage })));
 const AdminConsultationSlotsPage = lazy(() => adminMod().then((m) => ({ default: m.AdminConsultationSlotsPage })));
 const AdminDeliveryTerminalsPage = lazy(() => adminMod().then((m) => ({ default: m.AdminDeliveryTerminalsPage })));
+const AdminHomeDeliveryZonesPage = lazy(() => adminMod().then((m) => ({ default: m.AdminHomeDeliveryZonesPage })));
 const AdminBlogPage = lazy(() => adminMod().then((m) => ({ default: m.AdminBlogPage })));
 const AdminCustomersPage = lazy(() => adminMod().then((m) => ({ default: m.AdminCustomersPage })));
 const AdminRewardsPage = lazy(() => adminMod().then((m) => ({ default: m.AdminRewardsPage })));
@@ -129,6 +130,7 @@ export function AppRoutes() {
             <Route path="consultations" element={<AdminConsultationsPage />} />
             <Route path="consultation-slots" element={<AdminConsultationSlotsPage />} />
             <Route path="delivery-terminals" element={<AdminDeliveryTerminalsPage />} />
+            <Route path="home-delivery-zones" element={<AdminHomeDeliveryZonesPage />} />
             <Route path="blog" element={<AdminBlogPage />} />
             <Route path="consultations/:id" element={<AdminConsultationDetailPage />} />
             <Route path="customers" element={<AdminCustomersPage />} />

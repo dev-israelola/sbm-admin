@@ -36,6 +36,21 @@ const STATUS_TO_BACKEND: Record<RefundStatus, string> = {
   "partially-refunded": "PARTIALLY_REFUNDED",
 };
 
+const REASON_TO_BACKEND: Record<string, string> = {
+  "Wrong item delivered": "WRONG_ITEM_DELIVERED",
+  "Damaged product": "DAMAGED_PRODUCT",
+  "Expired product": "EXPIRED_PRODUCT",
+  "Failed delivery": "FAILED_DELIVERY",
+  "Payment issue": "PAYMENT_ISSUE",
+  "Duplicate order": "DUPLICATE_ORDER",
+  "Customer changed mind": "CUSTOMER_CHANGED_MIND",
+  "Ordered by mistake": "CUSTOMER_CHANGED_MIND",
+  "Found a better price": "CUSTOMER_CHANGED_MIND",
+  "Changed my mind": "CUSTOMER_CHANGED_MIND",
+  "Taking too long to ship": "OTHER",
+  "Other": "OTHER"
+};
+
 const EMPTY_META = {
   page: 1,
   limit: 10,
@@ -78,7 +93,11 @@ function normalizeRefund(raw: Record<string, any>): RefundRequest {
     preferredResolution: raw.preferredResolution ?? "Refund",
     amount: raw.amount ?? item.amount ?? 0,
     status: String(raw.status ?? "submitted").toLowerCase().replace(/_/g, "-") as RefundRequest["status"],
-    assignedReviewer: raw.assignedReviewer,
+    assignedReviewer: (() => {
+      const actor = raw.refundedBy || raw.reviewedBy;
+      if (!actor) return undefined;
+      return actor.displayName || [actor.firstName, actor.lastName].filter(Boolean).join(" ") || actor.email || "Admin";
+    })(),
     decisionNote: raw.internalNote ?? raw.decisionNote,
     evidenceFile: raw.evidenceFileName ?? raw.evidenceFile,
     createdAt: raw.createdAt,
@@ -124,6 +143,39 @@ export function useRefund(id: string | undefined) {
       return normalizeRefund(data);
     },
     enabled: !!id,
+  });
+}
+
+export function useCreateAdminRefund() {
+  const activePlatform = useAuthStore((s) => s.activePlatform);
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: {
+      orderId: string;
+      orderNumber: string;
+      orderItemId?: string;
+      productId: string;
+      productName: string;
+      reason: string;
+      description: string;
+      preferredResolution: string;
+      evidenceFileName?: string;
+    }) => {
+      const { data } = await api.post<Record<string, any>>(`/admin/orders/${payload.orderId}/refunds`, {
+        reason: REASON_TO_BACKEND[payload.reason] ?? "OTHER",
+        customerNote: payload.description,
+        preferredResolution: payload.preferredResolution,
+        evidenceFileName: payload.evidenceFileName,
+        items: payload.orderItemId
+          ? [{ orderItemId: payload.orderItemId, quantity: 1, condition: "GOOD" }]
+          : undefined, // undefined Means FULL ORDER REFUND
+      });
+      return normalizeRefund(data);
+    },
+    onSuccess: (_, variables) => {
+      qc.invalidateQueries({ queryKey: qk.refunds(activePlatform) });
+      qc.invalidateQueries({ queryKey: qk.order(activePlatform, variables.orderId) });
+    },
   });
 }
 

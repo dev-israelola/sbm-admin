@@ -52,6 +52,7 @@ export const NAV_BY_ROLE: Record<Role, NavSection[]> = {
         { to: "/admin/consultations", label: "Consultations", icon: MessageSquare },
         { to: "/admin/consultation-slots", label: "Consultation slots", icon: CalendarOff },
         { to: "/admin/delivery-terminals", label: "Delivery terminals", icon: MapPin },
+        { to: "/admin/home-delivery-zones", label: "Home delivery zones", icon: MapPin },
       ],
     },
     {
